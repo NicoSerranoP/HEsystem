@@ -35,6 +35,14 @@ condition:2
 
 
 # Client Documentation
+
+To set up a basic client script for buying, computing and requesting the final result from a specific server, you would need to use these high level functions:
+1. **initialize()**: it would ask you to enter your user information (account address, private key, endpoint URL, if you need help understanding these terms visit the tutorial of the server were you are downloading the data). It would also ask you if you want to save your user information in a file in order to retrieve it easily the next time. The output of this function is a User object containing all the required elements to interact with the data selling servers. ``` User = cl.initialize() ```
+1. **request_data(User)**: it would ask you to enter the data details URL (you can find it in each data package in the data selling server page). This function would **BUY** the data and retrieved from the server. The output of this function is a tuple of the encrypted data and its public key (you would need it in the future).``` data, public_key = cl.request_data(User) ```
+1. **request_result(User, result, public_key)**: it would send the encrypted result to the seller, notify the intermediary ledger and return the decrypted result. ``` final_result = cl.request_result(User, result, public_key) ```
+1. **request_test(User)**: it would request the encrypted test data and its public key.``` test_data, test_public_key = cl.request_test(User) ```
+1. **retrieve_test_result(User, result, public_key)**: It would request the decrypted result from the test data. ``` test_final_result = cl.retrieve_test_result(User, test_result, test_public_key) ```
+
 This Homomorphic encryption library allows to compute primitive operations over encrypted data (addition, multiplication and comparisons). With these operations available we can build more complex algorithms in order to extract useful information from encrypted data. The data object inherits some properties from heavily-used machine learning and data analysis libraries. Specifically, it has some properties from the torch.Tensor object ([torch library](https://pytorch.org/)) and also some properties from the np.ndarray object ([Numpy library](https://numpy.org/)). The following documentation describes the most used functions that can be applied to the data object from the HEsystem library. The examples assumes that the variable ```data``` contains the encrypted data sended from the server system of this same library.
 
 1. **data + 3**: outputs the matrix array added 3 to all its internal elements
@@ -49,7 +57,7 @@ This Homomorphic encryption library allows to compute primitive operations over 
 1. **data < matrix**: outputs a matrix of 1s (True) and 0s (False) depending on the condition between the elements
 1. **data >= matrix**: outputs a matrix of 1s (True) and 0s (False) depending on the condition between the elements
 1. **data <= matrix**: outputs a matrix of 1s (True) and 0s (False) depending on the condition between the elements
-1. **data[i]**: outputs the i-th element of the data array. 
+1. **data[i]**: outputs the i-th element of the data array.
 1. **data[i][j]**: outputs the ij-ith element of the data matrix.
 1. **data.dim()**: outputs the dimensions of the data as a set (for example, if the data is a 5x3 matrix then the output would be (2))
 1. **data.t()**: outputs the transpose matrix of the data matrix
@@ -89,9 +97,10 @@ In case you need to save dependencies in a *requirements.txt* file (required by 
 ``` pip freeze > requirements.txt ```
 1. If you installed *web3* remember to delete pywin23 dependencies (2 for now) from the requirements.txt files
 1. If you are deploying in a free tier Heroku remember to reconfigure torch to use CPU-only by adding this at the top of the torch dependency: ``` --find-links https://download.pytorch.org/whl/torch_stable.html ```
+1. In case you need to know how to upgrade the pip package follow this tutorial: https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65edc5fe9c56
 
 # Acknowledges
-We would like to thank the support and collaboration of PhD. Fredy Cuenca and the [PySyft Team](https://github.com/OpenMined/PySyft). 
+We would like to thank the support and collaboration of PhD. Fredy Cuenca and the [PySyft Team](https://github.com/OpenMined/PySyft).
 
 # Disclaimer
 This library is in its development and research phase. Do not use it in a production environment yet.

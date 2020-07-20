@@ -21,8 +21,8 @@ pub, pri = sy.keygen()
 pending_confirmation = []
 meta_link, test_link, test_result_link, data_link, result_link, num_rows, value, expiration_time, condition = sv.retrieve_contract_info()
 contract_data = sv.ContractData(value, expiration_time, meta_link, test_link, test_result_link, data_link, result_link)
-#contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
-contract_deployed = contract_data.use_contract(web3, '0x4cFcb6ae55A51299901F921090AaCabe067a05e6')
+contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
+#contract_deployed = contract_data.use_contract(web3, '0x1b9E7d1F6bDd287d079864b6774683EaCd273101')
 print('Contract address: ' + contract_deployed.address)
 
 # Restaurant Routes
@@ -36,9 +36,9 @@ def restaurantsdataresult():
     json_obj = request.json.get('obj')
     obj = loads(json_obj, object_hook=sv.hinted_tuple_hook)
     tensor = sv.deserialize_paillier(obj)
+    global pri
     tensor_decrypted = tensor.decrypt(protocol="paillier", private_key=pri)
     secure_result = sv.check_result(tensor_decrypted, num_rows, condition)
-    print(secure_result)
 
     if secure_result:
         key = contract_deployed.functions.send_decrypted(buyer).buildTransaction({
@@ -50,7 +50,6 @@ def restaurantsdataresult():
         hash_tx = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
         receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
         if receipt_tx.status:
-            print(receipt_tx)
             print('Result sent to: ' + buyer)
             return tensor_decrypted.serialize()
         else:
@@ -59,11 +58,11 @@ def restaurantsdataresult():
         return jsonify({'message':'Your result dimensions should be less than the original dimensions divided by' + condition})
 @app.route('/restaurants/test/result', methods=['POST'])
 def restaurantstestresult():
-    global pri
     print('Decrypted test result requested')
     json_obj = request.json.get('obj')
     obj = loads(json_obj, object_hook=sv.hinted_tuple_hook)
     tensor = sv.deserialize_paillier(obj)
+    global pri
     tensor_decrypted = tensor.decrypt(protocol="paillier", private_key=pri)
     global condition
     secure_result = sv.check_result(tensor_decrypted, num_rows, condition)
@@ -99,9 +98,9 @@ def restaurantsdata():
 @app.route('/restaurants/test', methods=['POST'])
 def restaurantstest():
     print('Test data has been requested')
-    global pub
     random_array = np.ones(num_rows)
     tensor = torch.Tensor(random_array)
+    global pub
     tensor_encrypted = tensor.encrypt(protocol="paillier", public_key=pub)
     tensor_obj = sv.serialize_paillier(tensor_encrypted)
 
@@ -117,8 +116,8 @@ def restaurantsdetails():
     return jsonify(data)
 
 # Comparison Route
-@app.route('/<string:string>/comparetensor', methods=['POST'])
-def comparetensor(string):
+@app.route('/<data>/<action>/comparetensor', methods=['POST'])
+def comparetensor(data, action):
     global pri
     print('Comparison requested')
     json_obj = request.json.get('obj')

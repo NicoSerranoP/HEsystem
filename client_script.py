@@ -1,5 +1,5 @@
 # http://127.0.0.1:5000/restaurants/details
-import hesystem.client as cl
+import hesystem as cl
 
 if __name__ == '__main__':
     User = cl.initialize()
