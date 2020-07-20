@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Home - Innomaps</title>
+    <link rel="stylesheet" href="static/assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Catamaran:100,200,300,400,500,600,700,800,900">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i">
+    <link rel="stylesheet" href="static/assets/css/styles.min.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-dark navbar-custom">
+        <div class="container"><a class="navbar-brand" href="/" style="background-image: url(&quot;static/assets/img/InnomapsWhite.png&quot;);background-size: cover;width: 130px;height: 30px;"></a><button data-toggle="collapse" class="navbar-toggler" data-target="#navbarResponsive-1"><span class="navbar-toggler-icon"></span></button>
+            <div
+                class="collapse navbar-collapse" id="navbarResponsive-1">
+                <ul class="nav navbar-nav ml-auto">
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="https://inno-maps.com/" target="_blank">Website</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="/data">Available data</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="/#tutorial">Tutorial</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="https://inno-maps.com/#contact">Contact</a></li>
+                </ul>
+        </div>
+        </div>
+    </nav>
+    <header class="masthead text-center text-white">
+        <div class="masthead-content">
+            <div class="container">
+                <h1 class="masthead-heading mb-0">4. Testing Tutorial</h1>
+            </div>
+        </div>
+    </header>
+    <section style="margin-top: 20px;">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <p class="text-center">To guarantee that you would obtain the right result from your computation over encrypted data, you can interact with the organizatin's test data. These data is encrypted using the same protocol than the real data and you can verify
+                        if your algorithm is working correctly with the system. Follow this tutorial to learn how.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 order-lg-2">
+                    <div class="p-5"><img class="rounded-circle img-fluid border border-dark" src="static/assets/img/github.png"></div>
+                </div>
+                <div class="col-lg-6 order-lg-1">
+                    <div class="p-5">
+                        <h2 class="display-4">1. Import the library</h2>
+                        <p>To handle the organization's data you would need to interact with your library functions (to install it check this&nbsp;<a href="/librarytutorial">tutorial</a>). To import the library you can execute the following command in a
+                            terminal or inside a Python <em>.py </em>file:</p>
+                        <p style="margin-bottom: 0px;">import hesystem.client as cl</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 order-lg-1">
+                    <div class="p-5"><img class="img-fluid border-dark" src="static/assets/img/codes/user_code.PNG"></div>
+                </div>
+                <div class="col-lg-6 order-lg-2">
+                    <div class="p-5">
+                        <h2 class="display-4">2. Set up your information<br></h2>
+                        <p>In this step you would need: your account address, private key (you can follow this&nbsp;<a href="/wallettutorial">tutorial</a>&nbsp;to get them) and your URL endpoint (you can follow this&nbsp;<a href="/connectiontutorial">tutorial</a>&nbsp;to
+                            get it). Remember to have enough funds in your account to execute the purchase. In the same terminal or file from the previous step, execute the following command to enter your information:&nbsp;<br></p>
+                        <p>User = cl.initialize()<br></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 order-lg-2">
+                    <div class="p-5"><img class="img-fluid border-dark" src="static/assets/img/codes/test_code.PNG"></div>
+                </div>
+                <div class="col-lg-6 order-lg-1">
+                    <div class="p-5">
+                        <h2 class="display-4">3.&nbsp;Set up the test configuration&nbsp;</h2>
+                        <p>Find the data details URL of the specific package (you can fin it&nbsp;<a href="/data">ahere</a>). In the same terminal or file from the previous step execute the following command to enter the test information:<br></p>
+                        <p>data, public_key = cl.request_test(User)<br></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 order-lg-1">
+                    <div class="p-5"><img class="img-fluid" src="static/assets/img/codes/test_algorithm_code.PNG"></div>
+                </div>
+                <div class="col-lg-6 order-lg-2">
+                    <div class="p-5">
+                        <h2 class="display-4">4. Execute your algorithm</h2>
+                        <p>The variable <em>data</em>&nbsp;from the previous step contains the encrypted data from the organization. You can interact with it in different ways. If you need specific help to do this, visit the library documentation <a href="https://github.com/NicoSerranoP/HEsystem">here</a>.</p>
+                        <p>result = data.transpose().mean(1)[0]<br></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 order-lg-2">
+                    <div class="p-5"><img class="img-fluid" src="static/assets/img/codes/test_result_code.PNG"></div>
+                </div>
+                <div class="col-lg-6 order-lg-1">
+                    <div class="p-5">
+                        <h2 class="display-4">5. Request the result<br></h2>
+                        <p>When you algorithm or compuations have finished, you would have an encrypted result. Check out the conditions that your result should follow <a href="/data">here</a>. To request the decrypted result execute the following command
+                            in the same terminal or file from the previous step:</p>
+                        <p>final_result = cl.retrieve_test_result(User, result, public_key)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 order-lg-1">
+                    <div class="p-5"><img class="img-fluid" src="static/assets/img/codes/test_check_code.PNG"></div>
+                </div>
+                <div class="col-lg-6 order-lg-2">
+                    <div class="p-5">
+                        <h2 class="display-4">6. Check your result</h2>
+                        <p>Execute the algorithm over the decrypted form of the test data (you can find it <a href="/data">here</a>) and confirm that you obtained the same result of the <em>final_result</em> variable.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h2 class="text-center display-4">Continue the tutorial <a href="/buytutorial">here</a><br></h2>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer class="py-5 bg-black">
+        <div class="container">
+            <p class="text-center text-white m-0 small">Innomaps 2020</p>
+        </div>
+    </footer>
+    <script src="static/assets/js/jquery.min.js"></script>
+    <script src="static/assets/bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>

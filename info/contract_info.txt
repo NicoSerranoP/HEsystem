@@ -1,0 +1,9 @@
+meta_link:http://127.0.0.1:5000/restaurants/details
+test_link:http://127.0.0.1:5000/restaurants/test
+test_result_link:http://127.0.0.1:5000/restaurants/test/result
+data_link:http://127.0.0.1:5000/restaurants/data
+result_link:http://127.0.0.1:5000/restaurants/data/result
+num_rows:(12,3)
+value:20
+expiration_time:10
+condition:2

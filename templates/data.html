@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Home - Innomaps</title>
+    <link rel="stylesheet" href="static/assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Catamaran:100,200,300,400,500,600,700,800,900">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:100,100i,300,300i,400,400i,700,700i,900,900i">
+    <link rel="stylesheet" href="static/assets/css/styles.min.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-dark navbar-expand-lg fixed-top bg-dark navbar-custom">
+        <div class="container"><a class="navbar-brand" href="/" style="background-image: url(&quot;static/assets/img/InnomapsWhite.png&quot;);background-size: cover;width: 130px;height: 30px;"></a><button data-toggle="collapse" class="navbar-toggler" data-target="#navbarResponsive-1"><span class="navbar-toggler-icon"></span></button>
+            <div
+                class="collapse navbar-collapse" id="navbarResponsive-1">
+                <ul class="nav navbar-nav ml-auto">
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="https://inno-maps.com/" target="_blank">website</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="/data">available data</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="/#tutorial">Tutorial</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="https://inno-maps.com/#contact">Contact</a></li>
+                </ul>
+        </div>
+        </div>
+    </nav>
+    <header class="masthead text-center text-white">
+        <div class="masthead-content">
+            <div class="container">
+                <h1 class="masthead-heading mb-0">Available Data</h1>
+            </div>
+        </div>
+    </header>
+    <section>
+        <div class="container mb-5 mt-5">
+            <div class="row card-deck flex-column flex-md-row mb-3">
+                <div class="col">
+                    <div class="card card-pricing text-center px-3 mb-4"><span class="h6 w-60 mx-auto px-4 py-1 bg-primary text-white shadow-sm">Restaurants</span>
+                        <div class="bg-transparent card-header pt-4 border-0">
+                            <h1 class="h1 font-weight-normal text-primary text-center mb-0">$<span class="price">20</span><span class="h6 text-muted ml-2">/result</span></h1>
+                        </div>
+                        <div class="card-body pt-0">
+                            <h3>Attributes</h3>
+                            <ul class="list-unstyled mb-4">
+                                <li>[0] Business size</li>
+                                <li>[1] Years functioning</li>
+                                <li>[2] Competitors influence</li>
+                            </ul>
+                            <h3>Links</h3>
+                            <ul class="list-unstyled mb-4">
+                                <li>Data details URL:&nbsp;&nbsp;<a href="http://127.0.0.1:5000/restaurant/details">http://127.0.0.1:5000/restaurant/details</a><br></li>
+                            </ul>
+                            <h3>Test data</h3>
+                            <p style="margin-bottom: 0px;">import numpy as np</p>
+                            <p>d_data = np.ones(12,3)</p>
+                            <h3>Condition</h3>
+                            <p>The result dimensions have to be less than the data dimensions divided by 2. A tuple less than (6,1)</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card card-pricing popular shadow text-center px-3 mb-4" style="border-style: none;"><span class="h6 w-60 mx-auto px-4 py-1 bg-primary text-white shadow-sm">Coffee shops</span>
+                        <div class="bg-transparent card-header pt-4 border-0">
+                            <h1 class="h1 font-weight-normal text-primary text-center mb-0">$<span class="price">20</span><span class="h6 text-muted ml-2">/result</span></h1>
+                        </div>
+                        <div class="card-body pt-0">
+                            <h3>Attributes</h3>
+                            <ul class="list-unstyled mb-4">
+                                <li>[0]&nbsp;Business size<br></li>
+                                <li>[1] Years functioning<br></li>
+                                <li>[2] Competitors influence<br></li>
+                            </ul>
+                            <h3>Links</h3>
+                            <ul class="list-unstyled mb-4">
+                                <li>Data details URL:&nbsp;<a href="https://basic-provider.herokuapp.com/cafeterias/details">https://basic-provider.herokuapp.com/cafeterias/details</a><br></li>
+                            </ul>
+                            <h3>Test data</h3>
+                            <p style="margin-bottom: 0px;">import numpy as np</p>
+                            <p>d_data = np.ones(12,3)</p>
+                            <h3>Condition</h3>
+                            <p>The result dimensions have to be less than the data dimensions divided by 2. A tuple less than (6,1)<br></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card card-pricing text-center px-3 mb-4"><span class="h6 w-60 mx-auto px-4 py-1 bg-primary text-white shadow-sm">Pharmacies<br></span>
+                        <div class="bg-transparent card-header pt-4 border-0">
+                            <h1 class="h1 font-weight-normal text-primary text-center mb-0">$<span class="price">20</span><span class="h6 text-muted ml-2">/result</span></h1>
+                        </div>
+                        <div class="card-body pt-0">
+                            <h3>Attributes</h3>
+                            <ul class="list-unstyled mb-4">
+                                <li>[0] Business size<br></li>
+                                <li>[1] Years functioning<br></li>
+                                <li>[2] Competitors influence<br></li>
+                            </ul>
+                            <h3>Links</h3>
+                            <ul class="list-unstyled mb-4">
+                                <li>Data details URL:&nbsp;<a href="https://basic-provider.herokuapp.com/farmacias/details">https://basic-provider.herokuapp.com/farmacias/details</a><br></li>
+                            </ul>
+                            <h3>Test data</h3>
+                            <p style="margin-bottom: 0px;">import numpy as np</p>
+                            <p>d_data = np.ones(12,3)</p>
+                            <h3>Condition</h3>
+                            <p>The result dimensions have to be less than the data dimensions divided by 2. A tuple less than (6,1)<br></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section>
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <h1>Restrictions</h1>
+                </div>
+            </div>
+            <div class="row align-items-center">
+                <div class="col-lg-6 col-xl-12 order-lg-1" style="margin-bottom: 20px;">
+                    <ul>
+                        <li>The final result dimensions have to be less than the data dimensions (check the conditions for each data package).</li>
+                        <li>We recommend you to use the implemented functions in the library for a correct experience.</li>
+                        <li>After buying access, you can ask multiple times for the encrypted data but you can only ask once for the final result.</li>
+                        <li>In case you need help with the implemented functions or default functions, visit the documentation <a href="https://github.com/NicoSerranoP/HEsystem">here</a>.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer class="py-5 bg-black">
+        <div class="container">
+            <p class="text-center text-white m-0 small">Innomaps 2020</p>
+        </div>
+    </footer>
+    <script src="static/assets/js/jquery.min.js"></script>
+    <script src="static/assets/bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>
