@@ -8,7 +8,7 @@ setup(
   author = 'Nicolas Serrano',                   # Type in your name
   author_email = 'nnicosp@hotmail.com',      # Type in your E-Mail
   url = 'https://github.com/NicoSerranoP/HEsystem',   # Provide either the link to your github or to your website
-  download_url = 'https://github.com/NicoSerranoP/HEsystem/archive/initial.tar.gz',    # I explain this later on
+  download_url = 'https://github.com/NicoSerranoP/HEsystem/archive/0.2.tar.gz',    # I explain this later on
   keywords = ['Homomorphic Encryption', 'Decentralized', 'Data Science'],   # Keywords that define your package best
   install_requires=[            # I get to this in a second
           'requests',
