@@ -1,3 +1,4 @@
+# HESystem server application
 from flask import Flask, request, jsonify, render_template
 from json import loads
 import syft as sy
@@ -20,8 +21,8 @@ pub, pri = sy.keygen()
 pending_confirmation = []
 meta_link, test_link, test_result_link, data_link, result_link, num_rows, value, expiration_time, condition = sv.retrieve_contract_info()
 contract_data = sv.ContractData(value, expiration_time, meta_link, test_link, test_result_link, data_link, result_link)
-contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
-#contract_deployed = contract_data.use_contract(web3, '0x157c7e9D93Bc09608f852836b3C82219de203c79')
+#contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
+contract_deployed = contract_data.use_contract(web3, '0x4cFcb6ae55A51299901F921090AaCabe067a05e6')
 print('Contract address: ' + contract_deployed.address)
 
 # Restaurant Routes
@@ -86,6 +87,7 @@ def restaurantsdata():
         cur.close()
         array = np.array(restaurants)
         tensor = torch.Tensor(array)
+        global pub
         tensor_encrypted = tensor.encrypt(protocol="paillier", public_key=pub)
         tensor_obj = sv.serialize_paillier(tensor_encrypted)
         global pending_confirmation
@@ -104,7 +106,7 @@ def restaurantstest():
     tensor_obj = sv.serialize_paillier(tensor_encrypted)
 
     return enc.encode(tensor_obj)
-@app.route('/restaurant/details', methods=['GET'])
+@app.route('/restaurants/details', methods=['GET'])
 def restaurantsdetails():
     print('Contract details have been requested')
     data = {
