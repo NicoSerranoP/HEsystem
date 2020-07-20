@@ -1,4 +1,4 @@
-# http://127.0.0.1:5000/restaurant/details
+# http://127.0.0.1:5000/restaurants/details
 import hesystem.client as cl
 
 if __name__ == '__main__':
