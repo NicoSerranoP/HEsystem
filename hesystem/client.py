@@ -122,8 +122,16 @@ def request_result(User, result, public_key):
             hash_tx = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
             receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
         else:
-            print('The result is not in Torch format. Be aware')
+            print('The result is not in Torch format. The transaction has been reversed.')
             # Ligitation
+            key = contract.functions.start_ligitation_buyer().buildTransaction({
+                'nonce': web3.eth.getTransactionCount(User.address),
+                'gas': 1728712,
+                'gasPrice': web3.toWei('21','gwei')
+            })
+            signed_tx = web3.eth.account.signTransaction(key, private_key=User.private_key)
+            hash_tx = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
+            receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
         return decrypted_result
     else:
         raise Exception('The send_result blockchain function was not executed correctly. Did you already request and receive a result?')
