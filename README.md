@@ -2,6 +2,13 @@
 A data marketplace system for computation over sensitive data.
 
 # Client Installation
+
+## Fast Installation
+```
+pip install hesystem
+```
+
+## Advanced Installation
 In order to set up the library and interact with encrypted data, you need to follow these steps:
 1. Download the repository as a *.zip file*
 1. Decompress the *.zip file* and copy the *hesystem* folder to your working directory
