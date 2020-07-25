@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
   name = 'hesystem',         # How you named your package folder (MyLib)
   packages = ['hesystem'],   # Chose the same as "name"
-  version = '0.3.5',      # Start with a small number and increase it with every change you make
+  version = '0.3.6.2',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'A data marketplace system for computation over sensitive data',   # Give a short description about your library
   author = 'Nicolas Serrano',                   # Type in your name

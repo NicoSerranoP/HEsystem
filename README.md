@@ -5,7 +5,7 @@ A data marketplace system for computation over sensitive data.
 
 ## Fast Installation
 ```
-pip install hesystem
+pip install hesystem -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
 ## Advanced Installation
