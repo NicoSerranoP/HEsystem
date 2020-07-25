@@ -11,11 +11,11 @@ setup(
   download_url = 'https://github.com/NicoSerranoP/HEsystem/archive/0.3.tar.gz',    # I explain this later on
   keywords = ['Homomorphic Encryption', 'Decentralized', 'Data Science'],   # Keywords that define your package best
   install_requires=[            # I get to this in a second
-          'requests',
+          'requests==2.22.0',
           'syft',
-          'numpy',
+          'numpy==1.18.1',
           'web3',
-          'torch',
+          'torch==1.4.0',
           'phe',
           'apscheduler',
           'psycopg2',
