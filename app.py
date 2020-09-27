@@ -6,6 +6,22 @@ import numpy as np
 import torch
 import hesystem.server as sv
 
+
+# NEW TENSEAL
+import tenseal as ts
+from copy import deepcopy
+from base64 import b64encode, b64decode
+# parameters
+poly_mod_degree = 8192
+coeff_mod_bit_sizes = [40, 21, 21, 21, 21, 21, 21, 40]
+# create TenSEALContext
+ctx_training = ts.context(ts.SCHEME_TYPE.CKKS, poly_mod_degree, -1, coeff_mod_bit_sizes)
+ctx_training.global_scale = 2 ** 21
+ctx_training.generate_galois_keys()
+
+ctx_public = deepcopy(ctx_training)
+ctx_public.make_context_public()
+
 # Organization information
 my_address, private_key, endpoint_url = sv.retrieve_user_info()
 
@@ -21,8 +37,8 @@ pub, pri = sy.keygen()
 pending_confirmation = []
 meta_link, test_link, test_result_link, data_link, result_link, num_rows, value, expiration_time, condition = sv.retrieve_contract_info()
 contract_data = sv.ContractData(value, expiration_time, meta_link, test_link, test_result_link, data_link, result_link)
-contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
-#contract_deployed = contract_data.use_contract(web3, '0x1b9E7d1F6bDd287d079864b6774683EaCd273101')
+#contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
+contract_deployed = contract_data.use_contract(web3, '0x03034Bfb564772d81cb11197f2Cbd5B27248Bca2')
 print('Contract address: ' + contract_deployed.address)
 
 # Restaurant Routes
@@ -78,33 +94,43 @@ def restaurantsdata():
     if flag_pay:
         print('The buyer is: ' + buyer)
         cur = conn.cursor()
-        command = "SELECT duracion, business_size, lat "
+        command = "SELECT duracion, business_size, DENSIDAD_P, PODER_ADQU, categoria_RESTAURANTE, lat, lon "
         command += "FROM RUCs r INNER JOIN businesscategory b on CAST(r.actividad_economica as INT )=b.id_actividad "
         command += "WHERE b.business_category = 'RESTAURANTE'"
         cur.execute(command)
         restaurants = cur.fetchall()
         cur.close()
-        array = np.array(restaurants)
-        tensor = torch.Tensor(array)
-        global pub
-        tensor_encrypted = tensor.encrypt(protocol="paillier", public_key=pub)
-        tensor_obj = sv.serialize_paillier(tensor_encrypted)
+
+        # NEW tenseal
+        global ctx_public
+        ckks_serialized = [ts.ckks_vector(ctx_public, x).serialize() for x in restaurants]
+        ctx_serialized = ctx_public.serialize()
+
         global pending_confirmation
         pending_confirmation.append(buyer)
 
-        return enc.encode(tensor_obj)
+        return jsonify({
+        'ckks': ckks_serialized,
+        'ctx': ctx_serialized
+        })
     else:
         return jsonify({'message':'There is no payment yet'})
 @app.route('/restaurants/test', methods=['POST'])
 def restaurantstest():
     print('Test data has been requested')
+    #random_array = [ [1] * num_rows[1] ] * num_rows[0]
     random_array = np.ones(num_rows)
-    tensor = torch.Tensor(random_array)
-    global pub
-    tensor_encrypted = tensor.encrypt(protocol="paillier", public_key=pub)
-    tensor_obj = sv.serialize_paillier(tensor_encrypted)
+    random_array = np.transpose(random_array)
+    random_array = random_array.tolist()
 
-    return enc.encode(tensor_obj)
+    global ctx_public
+    ckks_serialized = [b64encode(ts.ckks_vector(ctx_public, x).serialize()).decode() for x in random_array]
+    ctx_serialized = b64encode(ctx_public.serialize()).decode()
+
+    return jsonify({
+    'ckks': ckks_serialized,
+    'ctx': ctx_serialized
+    })
 @app.route('/restaurants/details', methods=['GET'])
 def restaurantsdetails():
     print('Contract details have been requested')

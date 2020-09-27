@@ -15,6 +15,11 @@ from hesystem.essentials import set_web3
 from hesystem.essentials import torch
 from hesystem.essentials import random
 
+
+# New TenSEAL
+import tenseal as ts
+from base64 import b64encode, b64decode
+
 # User information container
 class User_Data():
     def __init__(self, address, private_key, endpoint_url):
@@ -141,9 +146,15 @@ def request_result(User, result, public_key):
 # Data handling useful functions
 def retrieve_data(my_address, url):
     response = post(url, json={'address': my_address})
-    json_obj = response.content
-    data_obj = loads(json_obj, object_hook=hinted_tuple_hook)
+    json_obj = response.json()
+    #data_obj = loads(json_obj)
     try:
+        ctx_string = json_obj['ctx']
+        ctx = ts.context_from(b64decode(ctx_string))
+        data_string = json_obj['ckks']
+        data = [ts.ckks_vector_from(ctx, b64decode(x)) for x in data_string]
+        return data, ctx
+        '''
         data = deserialize_paillier(data_obj)
         public_key = data.child.pubkey
         # Setting comparison functions to PaillierTensor
@@ -161,8 +172,9 @@ def retrieve_data(my_address, url):
         set_ge(url, public_key, EncryptedNumber)
         set_le(url, public_key, EncryptedNumber)
         return data, public_key
+        '''
     except:
-        return data_obj, data_obj
+        return json_obj, json_obj
 def retrieve_result(User, result, public_key):
     random_data = random.randint(100)
     result = result + random_data
