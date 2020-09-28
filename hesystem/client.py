@@ -18,7 +18,9 @@ from hesystem.essentials import random
 
 # New TenSEAL
 import tenseal as ts
+from tenseal import _ts_cpp
 from base64 import b64encode, b64decode
+import numpy as np
 
 # User information container
 class User_Data():
@@ -89,20 +91,20 @@ def request_data(User):
     details_url = input('Enter the data details url: ')
     contract, value = retrieve_contract_web(User.web3, details_url)
     User.contract = contract
-    data, public_key = buy_data(User, value)
+    data, ctx = buy_data(User, value)
     print('Data has been received!')
     print('===========================')
-    return data, public_key
+    return data, ctx
 def request_test(User):
     details_url = input('Enter the data details url: ')
     contract, value = retrieve_contract_web(User.web3, details_url)
     test_url = contract.functions.test_link().call()
     User.contract = contract
-    data, public_key = retrieve_data(User.address, test_url)
+    data, ctx = retrieve_data(User.address, test_url)
     print('Test data has been received!')
     print('===========================')
-    return data, public_key
-def request_result(User, result, public_key):
+    return data, ctx
+def request_result(User, result, ctx):
     print('Real result has been requested!')
     print('===========================')
     contract = User.contract
@@ -116,8 +118,8 @@ def request_result(User, result, public_key):
     hash_tx = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
     receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
     if receipt_tx.status:
-        decrypted_result = retrieve_result(User, result, public_key)
-        if isinstance(decrypted_result, torch.Tensor):
+        decrypted_result = retrieve_result(User, result, ctx)
+        if not isinstance(decrypted_result, (dict, str)):
             key = contract.functions.confirm_result().buildTransaction({
                 'nonce': web3.eth.getTransactionCount(User.address),
                 'gas': 1728712,
@@ -127,7 +129,7 @@ def request_result(User, result, public_key):
             hash_tx = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
             receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
         else:
-            print('The result is not in Torch format. The transaction has been reversed.')
+            print('The result is not in proper format. The transaction has been reversed.')
             # Ligitation
             key = contract.functions.start_ligitation_buyer().buildTransaction({
                 'nonce': web3.eth.getTransactionCount(User.address),
@@ -147,12 +149,12 @@ def request_result(User, result, public_key):
 def retrieve_data(my_address, url):
     response = post(url, json={'address': my_address})
     json_obj = response.json()
-    #data_obj = loads(json_obj)
     try:
         ctx_string = json_obj['ctx']
         ctx = ts.context_from(b64decode(ctx_string))
         data_string = json_obj['ckks']
-        data = [ts.ckks_vector_from(ctx, b64decode(x)) for x in data_string]
+        data = client_deserialize(ctx, data_string)
+        set_suscriptable(_ts_cpp.CKKSVector)
         return data, ctx
         '''
         data = deserialize_paillier(data_obj)
@@ -175,40 +177,72 @@ def retrieve_data(my_address, url):
         '''
     except:
         return json_obj, json_obj
-def retrieve_result(User, result, public_key):
+def retrieve_result(User, result, ctx):
     random_data = random.randint(100)
-    result = result + random_data
-    result_obj = serialize_paillier(to_paillier(result, public_key))
-    json_obj = MultiDimensionalArrayEncoder().encode(result_obj)
-    data = {'buyer': User.address, 'obj': json_obj}
+    result = np.array(result) + random_data
+    result = client_serialize(result)
+
+    data = {'buyer': User.address, 'obj': result}
     result_url = User.contract.functions.result_link().call()
     response = post(result_url, json=data)
-    string_result = response.content
+    result = response.json()
+    print('Result has been received!')
+    print('===========================')
     try:
-        print('Result has been received!')
-        print('===========================')
-        decrypted_result = deserialize(string_result)
-        decrypted_result = decrypted_result - random_data
+        decrypted_result = np.array(result) - random_data
     except:
-        decrypted_result = loads(string_result)
+        decrypted_result = result
     return decrypted_result
-def retrieve_test_result(User, result, public_key):
+def retrieve_test_result(User, result, ctx):
     random_data = random.randint(100)
-    result = result + random_data
-    result_obj = serialize_paillier(to_paillier(result, public_key))
-    json_obj = MultiDimensionalArrayEncoder().encode(result_obj)
-    data = {'buyer': User.address, 'obj': json_obj}
+    result = np.array(result) + random_data
+    result = client_serialize(result)
+
+    data = {'buyer': User.address, 'obj': result}
     result_url = User.contract.functions.test_result_link().call()
     response = post(result_url, json=data)
-    string_result = response.content
+    result = response.json()
+    print('Result has been received!')
+    print('===========================')
     try:
-        print('Result has been received!')
-        print('===========================')
-        decrypted_result = deserialize(string_result)
-        decrypted_result = decrypted_result - random_data
+        decrypted_result = np.array(result) - random_data
     except:
-        decrypted_result = loads(string_result)
+        decrypted_result = result
     return decrypted_result
+
+def client_serialize(result):
+    if (isinstance(result, _ts_cpp.CKKSVector)):
+        return b64encode(result.serialize()).decode()
+    else:
+        return [client_serialize(e) for e in result]
+def client_deserialize(ctx, result):
+    if (not isinstance(result, list)):
+        return ts.ckks_vector_from(ctx, b64decode(result))
+    else:
+        return [client_deserialize(ctx, e) for e in result]
+
+def set_suscriptable(ModifiedClass):
+    '''def client_suscript(self, item):
+        vector = np.zeros(self.size()).tolist()
+        vector[item] = 1
+        return self.dot(vector)
+    ModifiedClass.__getitem__ = client_suscript
+    def client_iter(self):
+        self.n = 0
+        return self
+    ModifiedClass.__iter__ = client_iter
+    def client_next(self):
+        if self.n <= self.size():
+            result = self[self.n]
+            self.n += 1
+            return result
+    ModifiedClass.__next__ = client_next'''
+    def client_len(self):
+        return self.size()
+    ModifiedClass.__len__ = client_len
+    def client_mean(self):
+        return (self.dot([1]*self.size()))*(1/self.size())
+    ModifiedClass.mean = client_mean
 def set_gt(url, public_key, ModifiedClass):
     def client_gt(self, *args, **kwargs):
         tensor = self - args[0]

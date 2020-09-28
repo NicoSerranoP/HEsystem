@@ -22,8 +22,10 @@ if __name__ == '__main__':
     cur.close()
     conn.close()
     array = np.array(restaurants)
-    array = np.transpose(array)
-    print(array.shape)
+    array = np.transpose(array)    
+
+    random_array = np.random.randn(*array.shape)
+    random_array = random_array.tolist()
     array = array.tolist()
 
     #random_array = np.random.randn(*array.shape)

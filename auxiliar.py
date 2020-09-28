@@ -2,6 +2,7 @@ import tenseal as ts
 import numpy as np
 import torch
 from hesystem.client import retrieve_data
+from hesystem.client import set_suscriptable
 # parameters
 poly_mod_degree = 8192
 coeff_mod_bit_sizes = [40, 21, 21, 21, 21, 21, 21, 40]
@@ -15,8 +16,10 @@ ckks_vec = ts.ckks_vector(ctx_training, [1,2,3,4])
 random_array = [1] * 5
 ckks_vec = ts.ckks_vector(ctx_training, random_array)
 size = ckks_vec.size()
-data, ctx = retrieve_data('nico', 'http://127.0.0.1:5000/restaurants/test')
+#data, ctx = retrieve_data('nico', 'http://127.0.0.1:5000/restaurants/test')
 
+from tenseal import _ts_cpp
+set_suscriptable(_ts_cpp.CKKSVector)
 
 '''
 CREATE TABLE  rucs  (

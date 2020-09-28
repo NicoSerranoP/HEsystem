@@ -18,9 +18,8 @@ coeff_mod_bit_sizes = [40, 21, 21, 21, 21, 21, 21, 40]
 ctx_training = ts.context(ts.SCHEME_TYPE.CKKS, poly_mod_degree, -1, coeff_mod_bit_sizes)
 ctx_training.global_scale = 2 ** 21
 ctx_training.generate_galois_keys()
-
-ctx_public = deepcopy(ctx_training)
-ctx_public.make_context_public()
+secret_key = ctx_training.secret_key()
+ctx_training.make_context_public()
 
 # Organization information
 my_address, private_key, endpoint_url = sv.retrieve_user_info()
@@ -50,12 +49,12 @@ def restaurantsdataresult():
     global private_key
     buyer = request.json.get('buyer')
     json_obj = request.json.get('obj')
-    obj = loads(json_obj, object_hook=sv.hinted_tuple_hook)
-    tensor = sv.deserialize_paillier(obj)
-    global pri
-    tensor_decrypted = tensor.decrypt(protocol="paillier", private_key=pri)
-    secure_result = sv.check_result(tensor_decrypted, num_rows, condition)
+    global ctx_training
+    result = np.array(sv.deserialize_decrypt(ctx_training, json_obj, secret_key))
 
+    global num_rows
+    global condition
+    secure_result = sv.check_result(result, num_rows, condition)
     if secure_result:
         key = contract_deployed.functions.send_decrypted(buyer).buildTransaction({
             'nonce': web3.eth.getTransactionCount(my_address),
@@ -67,7 +66,7 @@ def restaurantsdataresult():
         receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
         if receipt_tx.status:
             print('Result sent to: ' + buyer)
-            return tensor_decrypted.serialize()
+            return jsonify(result.tolist())
         else:
             return jsonify({'message':'You already requested and received a result'})
     else:
@@ -76,16 +75,16 @@ def restaurantsdataresult():
 def restaurantstestresult():
     print('Decrypted test result requested')
     json_obj = request.json.get('obj')
-    obj = loads(json_obj, object_hook=sv.hinted_tuple_hook)
-    tensor = sv.deserialize_paillier(obj)
-    global pri
-    tensor_decrypted = tensor.decrypt(protocol="paillier", private_key=pri)
+    global ctx_training
+    result = np.array(sv.deserialize_decrypt(ctx_training, json_obj, secret_key))
+
+    global num_rows
     global condition
-    secure_result = sv.check_result(tensor_decrypted, num_rows, condition)
+    secure_result = sv.check_result(result, num_rows, condition)
     if secure_result:
-        return tensor_decrypted.serialize()
+        return jsonify(result.tolist())
     else:
-        return jsonify({'message':'There is a problem with your solution'})
+        return jsonify({'message':'Your result dimensions should be less than the original dimensions divided by' + condition})
 @app.route('/restaurants/data', methods=['POST'])
 def restaurantsdata():
     print('Real data has been requested')
@@ -100,11 +99,12 @@ def restaurantsdata():
         cur.execute(command)
         restaurants = cur.fetchall()
         cur.close()
+        array = np.array(restaurants)
+        array = np.transpose(array).tolist()
 
-        # NEW tenseal
-        global ctx_public
-        ckks_serialized = [ts.ckks_vector(ctx_public, x).serialize() for x in restaurants]
-        ctx_serialized = ctx_public.serialize()
+        global ctx_training
+        ckks_serialized = sv.encrypt_serialize(ctx_training, array)
+        ctx_serialized = b64encode(ctx_training.serialize()).decode()
 
         global pending_confirmation
         pending_confirmation.append(buyer)
@@ -118,14 +118,12 @@ def restaurantsdata():
 @app.route('/restaurants/test', methods=['POST'])
 def restaurantstest():
     print('Test data has been requested')
-    #random_array = [ [1] * num_rows[1] ] * num_rows[0]
     random_array = np.ones(num_rows)
-    random_array = np.transpose(random_array)
-    random_array = random_array.tolist()
+    random_array = np.transpose(random_array).tolist()
 
-    global ctx_public
-    ckks_serialized = [b64encode(ts.ckks_vector(ctx_public, x).serialize()).decode() for x in random_array]
-    ctx_serialized = b64encode(ctx_public.serialize()).decode()
+    global ctx_training
+    ckks_serialized = sv.encrypt_serialize(ctx_training, random_array)
+    ctx_serialized = b64encode(ctx_training.serialize()).decode()
 
     return jsonify({
     'ckks': ckks_serialized,

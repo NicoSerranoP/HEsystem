@@ -15,6 +15,9 @@ from hesystem.essentials import deserialize_paillier
 from hesystem.essentials import to_paillier
 from hesystem.essentials import set_web3
 
+import tenseal as ts
+from base64 import b64encode, b64decode
+
 # Contract information container
 class ContractData():
     def __init__(self, value, expiration_time, meta_link, test_link, test_result_link, data_link, result_link):
@@ -175,3 +178,15 @@ def check_buyer_confirmation():
                     hash_tx = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
                     receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
                     pending_confirmation.remove(buyer)
+
+def encrypt_serialize(ctx, vector):
+    try:
+        element = ts.ckks_vector(ctx, vector).serialize()
+        return b64encode(element).decode()
+    except:
+        return [encrypt_serialize(ctx, e) for e in vector]
+def deserialize_decrypt(ctx, vector, secret_key):    
+    if (isinstance(vector, list)):
+        return [deserialize_decrypt(e, ctx, secret_key) for e in vector]
+    else:
+        return ts.ckks_vector_from(ctx, b64decode(vector)).decrypt(secret_key)
