@@ -1,10 +1,20 @@
 # HESystem server application
 from flask import Flask, request, jsonify, render_template
-from json import loads
-import syft as sy
-import numpy as np
-import torch
+from tenseal import context
+from tenseal import SCHEME_TYPE
 import hesystem.server as sv
+import numpy as np
+
+# parameters
+poly_mod_degree = 2**13
+coeff_mod_bit_sizes = [40, 21, 21, 21, 21, 21, 21, 40]
+#coeff_mod_bit_sizes = [60, 30, 60]
+ctx_training = context(SCHEME_TYPE.CKKS, poly_mod_degree, -1, coeff_mod_bit_sizes)
+ctx_training.global_scale = 2 ** 21
+#ctx_training.global_scale = 2 ** 30
+ctx_training.generate_galois_keys()
+secret_key = ctx_training.secret_key()
+ctx_training.make_context_public()
 
 # Organization information
 my_address, private_key, endpoint_url = sv.retrieve_user_info()
@@ -12,17 +22,15 @@ my_address, private_key, endpoint_url = sv.retrieve_user_info()
 # Server configuration
 app = Flask(__name__)
 conn = sv.set_database('DATABASE_URL')
-enc = sv.MultiDimensionalArrayEncoder()
 scheduler = sv.schedule_buyer_confirmation()
 web3 = sv.set_web3(endpoint_url, my_address)
-pub, pri = sy.keygen()
 
 # Contract information
 pending_confirmation = []
 meta_link, test_link, test_result_link, data_link, result_link, num_rows, value, expiration_time, condition = sv.retrieve_contract_info()
 contract_data = sv.ContractData(value, expiration_time, meta_link, test_link, test_result_link, data_link, result_link)
 contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
-#contract_deployed = contract_data.use_contract(web3, '0x1b9E7d1F6bDd287d079864b6774683EaCd273101')
+#contract_deployed = contract_data.use_contract(web3, '0x07c91910e77D3311B91be49822864e9c4f1f4b7E')
 print('Contract address: ' + contract_deployed.address)
 
 # Restaurant Routes
@@ -34,12 +42,12 @@ def restaurantsdataresult():
     global private_key
     buyer = request.json.get('buyer')
     json_obj = request.json.get('obj')
-    obj = loads(json_obj, object_hook=sv.hinted_tuple_hook)
-    tensor = sv.deserialize_paillier(obj)
-    global pri
-    tensor_decrypted = tensor.decrypt(protocol="paillier", private_key=pri)
-    secure_result = sv.check_result(tensor_decrypted, num_rows, condition)
+    global ctx_training
+    result = np.array(sv.deserialize_decrypt(ctx_training, json_obj, secret_key))
 
+    global num_rows
+    global condition
+    secure_result = sv.check_result(result, num_rows, condition)
     if secure_result:
         key = contract_deployed.functions.send_decrypted(buyer).buildTransaction({
             'nonce': web3.eth.getTransactionCount(my_address),
@@ -51,7 +59,7 @@ def restaurantsdataresult():
         receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
         if receipt_tx.status:
             print('Result sent to: ' + buyer)
-            return tensor_decrypted.serialize()
+            return jsonify(result.tolist())
         else:
             return jsonify({'message':'You already requested and received a result'})
     else:
@@ -60,51 +68,73 @@ def restaurantsdataresult():
 def restaurantstestresult():
     print('Decrypted test result requested')
     json_obj = request.json.get('obj')
-    obj = loads(json_obj, object_hook=sv.hinted_tuple_hook)
-    tensor = sv.deserialize_paillier(obj)
-    global pri
-    tensor_decrypted = tensor.decrypt(protocol="paillier", private_key=pri)
+    global ctx_training
+    result = np.array(sv.deserialize_decrypt(ctx_training, json_obj, secret_key))
+
+    global num_rows
     global condition
-    secure_result = sv.check_result(tensor_decrypted, num_rows, condition)
+    secure_result = sv.check_result(result, num_rows, condition)
     if secure_result:
-        return tensor_decrypted.serialize()
+        return jsonify(result.tolist())
     else:
-        return jsonify({'message':'There is a problem with your solution'})
+        return jsonify({'message':'Your result dimensions should be less than the original dimensions divided by' + condition})
 @app.route('/restaurants/data', methods=['POST'])
 def restaurantsdata():
     print('Real data has been requested')
     buyer = request.json.get('address')
+    index = int(request.json.get('index'))
     flag_pay = contract_deployed.functions.f_buyer_payed(buyer).call()
     if flag_pay:
         print('The buyer is: ' + buyer)
         cur = conn.cursor()
-        command = "SELECT duracion, business_size, lat "
+        command = "SELECT lat, lon, duracion, business_size, categoria_CALZADO, categoria_CAFETERIA, categoria_PANADERIA, categoria_FARMACIA, categoria_RESTAURANTE, categoria_TIENDA "
         command += "FROM RUCs r INNER JOIN businesscategory b on CAST(r.actividad_economica as INT )=b.id_actividad "
         command += "WHERE b.business_category = 'RESTAURANTE'"
         cur.execute(command)
         restaurants = cur.fetchall()
         cur.close()
+
         array = np.array(restaurants)
-        tensor = torch.Tensor(array)
-        global pub
-        tensor_encrypted = tensor.encrypt(protocol="paillier", public_key=pub)
-        tensor_obj = sv.serialize_paillier(tensor_encrypted)
+        new_array = array[:,index]
+        new_array = [[e] for e in new_array]
+        array = np.delete(array, index, 1)
+        array = array.tolist()
+
+        global ctx_training
+        ckks_serialized = sv.encrypt_serialize(ctx_training, array)
+        col_serialized = sv.encrypt_serialize(ctx_training, new_array)
+        ctx_serialized = sv.b64encode(ctx_training.serialize()).decode()
+
         global pending_confirmation
         pending_confirmation.append(buyer)
 
-        return enc.encode(tensor_obj)
+        return jsonify({
+        'ckks': ckks_serialized,
+        'col': col_serialized,
+        'ctx': ctx_serialized
+        })
     else:
         return jsonify({'message':'There is no payment yet'})
 @app.route('/restaurants/test', methods=['POST'])
 def restaurantstest():
     print('Test data has been requested')
-    random_array = np.ones(num_rows)
-    tensor = torch.Tensor(random_array)
-    global pub
-    tensor_encrypted = tensor.encrypt(protocol="paillier", public_key=pub)
-    tensor_obj = sv.serialize_paillier(tensor_encrypted)
+    index = int(request.json.get('index'))
+    array = np.ones(num_rows)
+    new_array = array[:,index]
+    new_array = [[e] for e in new_array]
+    array = np.delete(array, index, 1)
+    array = array.tolist()
 
-    return enc.encode(tensor_obj)
+    global ctx_training
+    ckks_serialized = sv.encrypt_serialize(ctx_training, array)
+    col_serialized = sv.encrypt_serialize(ctx_training, new_array)
+    ctx_serialized = sv.b64encode(ctx_training.serialize()).decode()
+
+    return jsonify({
+    'ckks': ckks_serialized,
+    'col': col_serialized,
+    'ctx': ctx_serialized
+    })
 @app.route('/restaurants/details', methods=['GET'])
 def restaurantsdetails():
     print('Contract details have been requested')
@@ -114,29 +144,6 @@ def restaurantsdetails():
     'abi': contract_data.abi
     }
     return jsonify(data)
-
-# Comparison Route
-@app.route('/<data>/<action>/comparetensor', methods=['POST'])
-def comparetensor(data, action):
-    global pri
-    print('Comparison requested')
-    json_obj = request.json.get('obj')
-    function = request.json.get('function')
-    obj = loads(json_obj, object_hook=sv.hinted_tuple_hook)
-    tensor = sv.deserialize_paillier(obj)
-    tensor_decrypted = tensor.decrypt(protocol="paillier", private_key=pri)
-    tensor_numpy = tensor_decrypted.numpy()
-    if function == '>':
-        result = sv.greather_than(tensor_numpy)
-    elif function == '<':
-        result = sv.less_than(tensor_numpy)
-    elif function == '=':
-        result = sv.equal_to(tensor_numpy)
-    elif function == '>=':
-        result = sv.equal_great(tensor_numpy)
-    elif function == '<=':
-        result = sv.equal_less(tensor_numpy)
-    return torch.Tensor(result).serialize()
 
 # Information Website Routes
 @app.route('/')

@@ -4,16 +4,14 @@ from os import environ
 from psycopg2 import connect
 from urllib.parse import urlparse
 
-from numpy import ndarray
-from numpy import array
-
+from hesystem.essentials import ndarray
+from hesystem.essentials import array
 from hesystem.essentials import retrieve_user_info
-from hesystem.essentials import MultiDimensionalArrayEncoder
-from hesystem.essentials import hinted_tuple_hook
-from hesystem.essentials import serialize_paillier
-from hesystem.essentials import deserialize_paillier
-from hesystem.essentials import to_paillier
 from hesystem.essentials import set_web3
+
+from tenseal import ckks_vector
+from tenseal import ckks_vector_from
+from base64 import b64encode, b64decode
 
 # Contract information container
 class ContractData():
@@ -27,8 +25,8 @@ class ContractData():
         self.data_link = data_link
         self.result_link = result_link
 
-        abi_file = open('info/abi.txt','r')
-        bytecode_file = open('info/bytecode.txt','r')
+        abi_file = open('info/abi.txt', mode='r', encoding='utf-16')
+        bytecode_file = open('info/bytecode.txt', mode='r', encoding='utf-16')
         self.abi = abi_file.read().rstrip()
         self.bytecode = bytecode_file.read().rstrip()
     def deploy_contract(self, web3, my_address, private_key):
@@ -175,3 +173,15 @@ def check_buyer_confirmation():
                     hash_tx = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
                     receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
                     pending_confirmation.remove(buyer)
+
+def encrypt_serialize(ctx, vector):
+    try:
+        element = ckks_vector(ctx, vector).serialize()
+        return b64encode(element).decode()
+    except:
+        return [encrypt_serialize(ctx, e) for e in vector]
+def deserialize_decrypt(ctx, vector, secret_key):
+    if (isinstance(vector, list)):
+        return [deserialize_decrypt(ctx, e, secret_key) for e in vector]
+    else:
+        return ckks_vector_from(ctx, b64decode(vector)).decrypt(secret_key)

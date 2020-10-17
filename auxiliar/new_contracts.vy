@@ -68,7 +68,7 @@ def send_result():
 def start_ligitation_buyer():
     buyer: address = msg.sender
     assert(self.f_buyer_payed[buyer] == True)
-    assert(self.f_buyer_sent_result[buyer] == True)
+    #assert(self.f_buyer_sent_result[buyer] == True)
     assert(self.f_provider_sent_result[buyer] == False)
     assert(self.f_buyer_received_result[buyer] == False)
 

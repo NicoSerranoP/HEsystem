@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
   name = 'hesystem',         # How you named your package folder (MyLib)
   packages = ['hesystem'],   # Chose the same as "name"
-  version = '0.3.6.2',      # Start with a small number and increase it with every change you make
+  version = '0.3.7.0',      # Start with a small number and increase it with every change you make
   license='MIT',        # Chose a license from here: https://help.github.com/articles/licensing-a-repository
   description = 'A data marketplace system for computation over sensitive data',   # Give a short description about your library
   author = 'Nicolas Serrano',                   # Type in your name
@@ -12,11 +12,9 @@ setup(
   keywords = ['Homomorphic Encryption', 'Decentralized', 'Data Science'],   # Keywords that define your package best
   install_requires=[            # I get to this in a second
           'requests==2.22.0',
-          'syft',
-          'numpy==1.18.1',
+          'tenseal==0.2.0a1',
+          'numpy',
           'web3',
-          'torch==1.4.0',
-          'phe',
           'apscheduler',
           'psycopg2',
       ],
