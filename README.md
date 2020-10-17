@@ -49,6 +49,7 @@ To set up a basic client script for buying, computing and requesting the final r
 1. **request_result(User, result, public_key)**: it would send the encrypted result to the seller, notify the intermediary ledger and return the decrypted result. ``` final_result = cl.request_result(User, result, public_key) ```
 1. **request_test(User)**: it would request the encrypted test data and its public key.``` test_data, test_public_key = cl.request_test(User) ```
 1. **retrieve_test_result(User, result, public_key)**: It would request the decrypted result from the test data. ``` test_final_result = cl.retrieve_test_result(User, test_result, test_public_key) ```
+1. **litigation(User)**: It would allow the client to cancel the transaction in case something went wrong before executing the *request_result* function. Be advised that this function interacts with the blockchain therefore it has a small gas cost. Try to prepare your code using the test functions before performing the real transaction. ``` receipt = cl.litigation(User) ```
 
 This Homomorphic encryption library allows to compute primitive operations over encrypted data (addition, multiplication and comparisons). With these operations available we can build more complex algorithms in order to extract useful information from encrypted data. The data object inherits some properties from heavily-used machine learning and data analysis libraries. Specifically, it has some properties from the torch.Tensor object ([torch library](https://pytorch.org/)) and also some properties from the np.ndarray object ([Numpy library](https://numpy.org/)). The following documentation describes the most used functions that can be applied to the data object from the HEsystem library. The examples assumes that the variable ```data``` contains the encrypted data sended from the server system of this same library.
 
@@ -105,6 +106,7 @@ In case you need to save dependencies in a *requirements.txt* file (required by 
 1. If you installed *web3* remember to delete pywin23 dependencies (2 for now) from the requirements.txt files
 1. If you are deploying in a free tier Heroku remember to reconfigure torch to use CPU-only by adding this at the top of the torch dependency: ``` --find-links https://download.pytorch.org/whl/torch_stable.html ```
 1. In case you need to know how to upgrade the pip package follow this tutorial: https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65edc5fe9c56
+1. If you need to compile/modify the vyper contract located in the *auxiliar* folder run the following command: ``` vyper -f bytecode .\auxiliar\new_contracts.vy > .\info\bytecode.txt ; vyper -f abi .\auxiliar\new_contracts.vy > .\info\abi.txt ```
 
 # Acknowledges
 We would like to thank the support and collaboration of PhD. Fredy Cuenca and the [PySyft Team](https://github.com/OpenMined/PySyft).

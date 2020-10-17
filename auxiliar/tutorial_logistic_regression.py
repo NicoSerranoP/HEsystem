@@ -12,6 +12,7 @@ random.seed(73)
 
 def split_train_test(x, y, test_ratio=0.3):
     idxs = [i for i in range(len(x))]
+    random.seed(73)
     random.shuffle(idxs)
     # delimiter between test and train data
     delim = int(len(x) * test_ratio)
@@ -54,27 +55,46 @@ class LR(torch.nn.Module):
         return out
 
 class EncryptedLR:
-
-    def __init__(self, torch_lr):
+    def __init__(self, torch_lr_model):
         # TenSEAL processes lists and not torch tensors
         # so we take out parameters from the PyTorch model
-        self.weight = torch_lr.lr.weight.data.tolist()[0]
-        self.bias = torch_lr.lr.bias.data.tolist()
+        self.weight = torch_lr_model.lr.weight.data.tolist()[0]
+        self.bias = torch_lr_model.lr.bias.data.tolist()
+
+        # accumulate gradients and count iterations
+        self._delta_w = 0
+        self._delta_b = 0
+        self._count = 0
 
     def forward(self, enc_x):
-        # We don't need to perform sigmoid as this model
-        # will only be used for evaluation, and the label
-        # can be deduced without applying sigmoid
         enc_out = enc_x.dot(self.weight) + self.bias
+        # if training, you need a sigmoid function
+        enc_out = self.sigmoid(enc_out)
         return enc_out
+
+    def backward(self, enc_x, enc_out, enc_y):
+        out_minus_y = (enc_out - enc_y)
+        self._delta_w += enc_x * out_minus_y
+        self._delta_b += out_minus_y
+        self._count += 1
+
+    def update_parameters(self):
+        if self._count == 0:
+            raise Exception("You should at least run one foward iteration")
+        self.weight -= self._delta_w*(1/self._count)+self.weight*0.05 #0.05 is to keep layer in range of sigmoid approximation
+        self.bias -= self._delta_b*(1/self._count)
+
+        self._delta_w = 0
+        self._delta_b = 0
+        self._count = 0
+
+    @staticmethod
+    def sigmoid(enc_x):
+        # use an approximation function for sigmoid
+        return enc_x.polyval([0.5,0.197,0,-0.004])
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
-
-    ################################################
-    ## You can use the functions below to perform ##
-    ## the evaluation with an encrypted model     ##
-    ################################################
 
     def encrypt(self, context):
         self.weight = ts.ckks_vector(context, self.weight)
@@ -84,7 +104,7 @@ class EncryptedLR:
         self.weight = self.weight.decrypt()
         self.bias = self.bias.decrypt()
 
-def train(model, optim, criterion, x, y, epochs=5):
+def train(model, optim, criterion, x, y, epochs=1):
     for e in range(1, epochs + 1):
         optim.zero_grad()
         out = model(x)
@@ -93,6 +113,18 @@ def train(model, optim, criterion, x, y, epochs=5):
         optim.step()
         print(f"Loss at epoch {e}: {loss.data}")
     return model
+
+def enc_train(enc_model, ctx, enc_data_train, enc_target_train, epochs=1):
+    enc_model.encrypt(ctx)
+    for epoch in range(epochs):
+        print(epoch)
+        for enc_x, enc_y in zip(enc_data_train, enc_target_train):
+            #print(enc_x.size())
+            enc_out = enc_model.forward(enc_x)
+            enc_model.backward(enc_x, enc_out, enc_y)
+        enc_model.update_parameters()
+    return enc_model
+
 
 def accuracy(model, x, y):
     out = model(x)
@@ -119,47 +151,40 @@ def encrypted_evaluation(model, enc_x_test, y_test):
     return correct / len(x_test)
 
 if __name__ == '__main__':
-    # You can use whatever data you want without modification to the tutorial
-    # x_train, y_train, x_test, y_test = random_data()
-    x_train, y_train, x_test, y_test = heart_disease_data()
+    data_train, target_train, data_test, target_test = heart_disease_data()
 
-    print("############# Data summary #############")
-    print(f"x_train has shape: {x_train.shape}")
-    print(f"y_train has shape: {y_train.shape}")
-    print(f"x_test has shape: {x_test.shape}")
-    print(f"y_test has shape: {y_test.shape}")
-    print("#######################################")
-
-    n_features = x_train.shape[1]
+    n_features = data_train.shape[1]
     model = LR(n_features)
     # use gradient descent with a learning_rate=1
     optim = torch.optim.SGD(model.parameters(), lr=1)
     # use Binary Cross Entropy Loss
     criterion = torch.nn.BCELoss()
 
-    model = train(model, optim, criterion, x_train, y_train)
+    model = train(model, optim, criterion, data_train, target_train)
 
-    plain_accuracy = accuracy(model, x_test, y_test)
+    plain_accuracy = accuracy(model, data_test, target_test)
     print(f"Accuracy on plain test_set: {plain_accuracy}")
 
-    eelr = EncryptedLR(model)
+    eelr_evaluation = EncryptedLR(model)
     # parameters
-    poly_mod_degree = 4096
-    coeff_mod_bit_sizes = [40, 20, 40]
+    poly_mod_degree = 8192
+    coeff_mod_bit_sizes = [40, 21, 21, 21, 21, 21, 21, 40]
     # create TenSEALContext
-    ctx_eval = ts.context(ts.SCHEME_TYPE.CKKS, poly_mod_degree, -1, coeff_mod_bit_sizes)
+    ctx_training = ts.context(ts.SCHEME_TYPE.CKKS, poly_mod_degree, -1, coeff_mod_bit_sizes)
     # scale of ciphertext to use
-    ctx_eval.global_scale = 2 ** 20
+    ctx_training.global_scale = 2 ** 21
     # this key is needed for doing dot-product operations
-    ctx_eval.generate_galois_keys()
+    ctx_training.generate_galois_keys()
 
-    t_start = time()
-    enc_x_test = [ts.ckks_vector(ctx_eval, x.tolist()) for x in x_test]
-    t_end = time()
-    print(f"Encryption of the test-set took {int(t_end - t_start)} seconds")
+    # Evaluation
+    #enc_data_test = [ts.ckks_vector(ctx_training, x.tolist()) for x in data_test]
 
-    encrypted_accuracy = encrypted_evaluation(eelr, enc_x_test, y_test)
-    diff_accuracy = plain_accuracy - encrypted_accuracy
-    print(f"Difference between plain and encrypted accuracies: {diff_accuracy}")
-    if diff_accuracy < 0:
-        print("Oh! We got a better accuracy on the encrypted test-set! The noise was on our side...")
+    #enc_out = eelr_evaluation(enc_data_test[0])
+    #print("Single time result")
+
+    # Training
+    enc_data_train = [ts.ckks_vector(ctx_training, x.tolist()) for x in data_train]
+    enc_target_train = [ts.ckks_vector(ctx_training, y.tolist()) for y in target_train]
+
+    eelr_training = EncryptedLR(LR(n_features))
+    eelr_training = enc_train(eelr_training, ctx_training, enc_data_train, enc_target_train)

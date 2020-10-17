@@ -19,16 +19,15 @@ if __name__ == '__main__':
     cur.execute(command)
     restaurants = cur.fetchall()
 
+    index = 2
+
     cur.close()
     conn.close()
     array = np.array(restaurants)
-    array = np.transpose(array)    
-
-    random_array = np.random.randn(*array.shape)
-    random_array = random_array.tolist()
+    new_array = array[:,index]
+    new_array = [[e] for e in new_array]
+    array = np.delete(array, index, 1)
     array = array.tolist()
-
-    #random_array = np.random.randn(*array.shape)
 
     poly_mod_degree = 8192
     coeff_mod_bit_sizes = [40, 21, 21, 21, 21, 21, 21, 40]
