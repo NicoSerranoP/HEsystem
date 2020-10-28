@@ -38,6 +38,7 @@ def load_data(url, target_column, ratio):
     # load data
     data = pd.read_csv(url)
     data = data.dropna()
+    data = data.drop(columns=["education", "currentSmoker", "BPMeds", "diabetes", "diaBP", "BMI"])
 
     # separate target column from data
     target = torch.tensor(data[target_column].values).float().unsqueeze(1)
@@ -57,20 +58,32 @@ def load_data(url, target_column, ratio):
 
 if __name__ == '__main__':
     # Requesting encrypted data
-    User = cl.initialize()
-    data, col, ctx = cl.request_data(User)
+    User = cl.initialize(file_path="info/user_info.txt")
+
+    # Load data
+    tx_data, tx_target, ts_data, ts_target = load_data('framingham.csv', "TenYearCHD", 0.3)
 
     # Model specifications
-    n_features = len(data[0])
+    n_features = len(tx_data[0])
     model = LR(n_features)
     optim = torch.optim.SGD(model.parameters(), lr=1)
     criterion = torch.nn.BCELoss()
 
-    # Load data and train model
-    tx_data, tx_target, ts_data, ts_target = load_data('local_training_businesses.csv', "duracion", 0.3)
+    # Training
     model = train(model, optim, criterion, tx_data, tx_target)
 
     # Encrypted evaluation
     eelr = EncryptedLR_evaluation(model)
-    enc_out = eelr(data[0])
-    final_result = cl.request_result(User, enc_out, ctx)
+    data, col, ctx = cl.request_data(User, details_url="http://127.0.0.1:5000/restaurants/details", index=9)
+    #eelr.encrypt(ctx)
+    enc_out = eelr(data[3])
+    enc_result = cl.request_result(User, enc_out, ctx)
+    result_sigmoid = torch.sigmoid(torch.Tensor(enc_result))
+    print(f"Encrypted evaluation result: {result_sigmoid}")
+
+    # Checking the evaluation without encrypted data
+    data_check, col_check, ctx_check = cl.request_data(User, details_url="http://127.0.0.1:5000/restaurants/details", index=9)
+    enc_out_check = data_check[3]
+    enc_result_check = cl.request_result(User, enc_out_check, ctx_check)
+    model_check = model(torch.Tensor(enc_result_check))
+    print(f"Decrypted evaluation result: {model_check}")

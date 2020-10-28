@@ -13,6 +13,7 @@ setup(
   install_requires=[            # I get to this in a second
           'requests==2.22.0',
           'tenseal==0.2.0a1',
+          'rusty-rlp',
           'numpy',
           'web3',
           'apscheduler',

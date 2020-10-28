@@ -5,7 +5,7 @@ A data marketplace system for computation over sensitive data.
 
 ## Fast Installation
 ```
-pip install hesystem -f https://download.pytorch.org/whl/torch_stable.html
+pip install hesystem
 ```
 
 ## Advanced Installation
@@ -81,18 +81,24 @@ This Homomorphic encryption library allows to compute primitive operations over 
 # For Developers
 ## Creatting a Virtual Environment
 In order to avoid confusion with existing installed libraries and to keep the dependencies as specific as possible we use virtual environments. To create a Python virtual environment run the following command in the working directory:
-```python -m venv environment_name```
+
+```
+python -m venv environment_name
+```
+
 To activate the environment run the following command in the working directory:
+
 ```
 cd environment_name/Scripts/
 ./ activate
 ```
+
 ## Setting up Flask
 To use the flask web server Python's library we need to set the following environment variables:
 ### Windows
-1. ```set FLASK_APP="app.py"```
-1. ```set FLASK_ENV="development"``` *(use the development feature only when using an existing contract. For contract deployment, use the production environment)*
-1. ```set DATABASE_URL="postgresql://postgres:postgres@localhost:5432/basic-provider"```
+1. ``` set FLASK_APP="app.py" ```
+1. ``` set FLASK_ENV="development" ``` *(use the development feature only when using an existing contract. For contract deployment, use the production environment)*
+1. ``` set DATABASE_URL="postgresql://postgres:postgres@localhost:5432/basic-provider" ```
 
 ### Linux
 1. ```$env:FLASK_APP="app.py"```
@@ -102,14 +108,19 @@ To use the flask web server Python's library we need to set the following enviro
 In case you need here is a ["Deploying a Flask Application to Heroku"](https://stackabuse.com/deploying-a-flask-application-to-heroku/) tutorial.
 In case you need help about how to point the git repository to the Heroku repository check this [website](https://dashboard.heroku.com/apps/basic-provider/deploy/heroku-git)
 In case you need to save dependencies in a *requirements.txt* file (required by Heroku) run the following command:
-``` pip freeze > requirements.txt ```
+
+```
+pip freeze > requirements.txt
+```
+
 1. If you installed *web3* remember to delete pywin23 dependencies (2 for now) from the requirements.txt files
 1. If you are deploying in a free tier Heroku remember to reconfigure torch to use CPU-only by adding this at the top of the torch dependency: ``` --find-links https://download.pytorch.org/whl/torch_stable.html ```
 1. In case you need to know how to upgrade the pip package follow this tutorial: https://medium.com/@joel.barmettler/how-to-upload-your-python-package-to-pypi-65edc5fe9c56
 1. If you need to compile/modify the vyper contract located in the *auxiliar* folder run the following command: ``` vyper -f bytecode .\auxiliar\new_contracts.vy > .\info\bytecode.txt ; vyper -f abi .\auxiliar\new_contracts.vy > .\info\abi.txt ```
+1. To install all dependencies and modules from a *requirements.txt* file run the following command: ``` pip install -r requirements.txt ``` and if you need to install torch then run ``` pip install -r requirements.txt -f https://download.pytorch.org/whl/torch_stable.html ```
 
 # Acknowledges
-We would like to thank the support and collaboration of PhD. Fredy Cuenca and the [PySyft Team](https://github.com/OpenMined/PySyft).
+We would like to thank the support and collaboration of PhD. Fredy Cuenca, PhD. Diego Peluffo and the [OpenMined Team](https://github.com/OpenMined/PySyft).
 
 # Disclaimer
 This library is in its development and research phase. Do not use it in a production environment yet.

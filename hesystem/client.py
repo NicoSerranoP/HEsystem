@@ -55,30 +55,36 @@ def buy_data(User, index, value):
             raise Exception('The buy_data function was not executed correctly')
 
 # Client visible functions
-def initialize():
+def initialize(file_path=None):
     print('Setting up user information')
     print('===========================')
-    load = input('Do you want to load payment info from file? (Y/N) ')
-    if load == 'Y' or load == 'y':
-        user_path = input('Enter your information file path: ')
-        address, private_key, endpoint_url = retrieve_user_info(user_path)
+    if file_path:
+        address, private_key, endpoint_url = retrieve_user_info(file_path)
         return User_Data(address, private_key, endpoint_url)
     else:
-        address = input('Enter your address (0x514AEa42dA89B7856C81bdAA4A20BD7D64EbA8E4): ')
-        private_key = input('Enter your private_key (5D232502101181CADEF51F19294A981E22D2DCA38AB031E9BA6EE12F512263BA): ')
-        endpoint_url = input('Enter your endpoint_url (https://ropsten.infura.io/v3/52c1338c6a2220d4a18dfef32ba53c2a): ')
-        save = input('Do you want to save this info in a file? (Y/N) ')
-        if save == 'Y' or save == 'y':
+        load = input('Do you want to load payment info from file? (Y/N) ')
+        if load == 'Y' or load == 'y':
             user_path = input('Enter your information file path: ')
-            user_file = open(user_path, 'w')
-            user_file.write('address:'+address+'\n')
-            user_file.write('private_key:'+private_key+'\n')
-            user_file.write('endpoint_url:'+endpoint_url+'\n')
-            user_file.close()
-        return User_Data(address, private_key, endpoint_url)
-def request_data(User):
-    details_url = input('Enter the data details url: ')
-    index = input('Enter the column index you need separated: ')
+            address, private_key, endpoint_url = retrieve_user_info(user_path)
+            return User_Data(address, private_key, endpoint_url)
+        else:
+            address = input('Enter your address (0x514AEa42dA89B7856C81bdAA4A20BD7D64EbA8E4): ')
+            private_key = input('Enter your private_key (5D232502101181CADEF51F19294A981E22D2DCA38AB031E9BA6EE12F512263BA): ')
+            endpoint_url = input('Enter your endpoint_url (https://ropsten.infura.io/v3/52c1338c6a2220d4a18dfef32ba53c2a): ')
+            save = input('Do you want to save this info in a file? (Y/N) ')
+            if save == 'Y' or save == 'y':
+                user_path = input('Enter your information file path: ')
+                user_file = open(user_path, 'w')
+                user_file.write('address:'+address+'\n')
+                user_file.write('private_key:'+private_key+'\n')
+                user_file.write('endpoint_url:'+endpoint_url+'\n')
+                user_file.close()
+            return User_Data(address, private_key, endpoint_url)
+def request_data(User, details_url=None, index=None):
+    if not details_url:
+        details_url = input('Enter the data details url: ')
+    if not index:
+        index = input('Enter the column index you need separated: ')
     contract, value = retrieve_contract_web(User.web3, details_url)
     User.contract = contract
     data, col, ctx = buy_data(User, index, value)
@@ -125,8 +131,12 @@ def request_result(User, result, ctx):
         return decrypted_result
     else:
         raise Exception('The send_result blockchain function was not executed correctly. Did you already request and receive a result?')
-def litigation(User):
-    key = User.contract.functions.start_ligitation_buyer().buildTransaction({
+def litigation(User, details_url=None):
+    if hasattr(User,'contract'):
+        contract = User.contract
+    else:
+        contract, value = retrieve_contract_web(User.web3, details_url)
+    key = contract.functions.start_ligitation_buyer().buildTransaction({
         'nonce': User.web3.eth.getTransactionCount(User.address),
         'gas': 1728712,
         'gasPrice': User.web3.toWei('21','gwei')

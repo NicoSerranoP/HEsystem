@@ -6,12 +6,16 @@ import hesystem.server as sv
 import numpy as np
 
 # parameters
-poly_mod_degree = 2**13
-coeff_mod_bit_sizes = [40, 21, 21, 21, 21, 21, 21, 40]
+#poly_mod_degree = 2**12 # value: 4096
+#poly_mod_degree = 2**13 # value: 8192
+poly_mod_degree = 2**13 # value: 8192
+#coeff_mod_bit_sizes = [40, 20, 40]
 #coeff_mod_bit_sizes = [60, 30, 60]
+coeff_mod_bit_sizes = [40, 21, 21, 21, 21, 21, 21, 40]
 ctx_training = context(SCHEME_TYPE.CKKS, poly_mod_degree, -1, coeff_mod_bit_sizes)
-ctx_training.global_scale = 2 ** 21
+#ctx_training.global_scale = 2 ** 20
 #ctx_training.global_scale = 2 ** 30
+ctx_training.global_scale = 2 ** 21
 ctx_training.generate_galois_keys()
 secret_key = ctx_training.secret_key()
 ctx_training.make_context_public()
@@ -29,8 +33,8 @@ web3 = sv.set_web3(endpoint_url, my_address)
 pending_confirmation = []
 meta_link, test_link, test_result_link, data_link, result_link, num_rows, value, expiration_time, condition = sv.retrieve_contract_info()
 contract_data = sv.ContractData(value, expiration_time, meta_link, test_link, test_result_link, data_link, result_link)
-contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
-#contract_deployed = contract_data.use_contract(web3, '0x07c91910e77D3311B91be49822864e9c4f1f4b7E')
+#contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
+contract_deployed = contract_data.use_contract(web3, '0x39c010B6E98684f79e96a2263a4FB59B4594c0B4')
 print('Contract address: ' + contract_deployed.address)
 
 # Restaurant Routes
@@ -87,17 +91,24 @@ def restaurantsdata():
     if flag_pay:
         print('The buyer is: ' + buyer)
         cur = conn.cursor()
-        command = "SELECT lat, lon, duracion, business_size, categoria_CALZADO, categoria_CAFETERIA, categoria_PANADERIA, categoria_FARMACIA, categoria_RESTAURANTE, categoria_TIENDA "
-        command += "FROM RUCs r INNER JOIN businesscategory b on CAST(r.actividad_economica as INT )=b.id_actividad "
-        command += "WHERE b.business_category = 'RESTAURANTE'"
+        #command = "SELECT lat, lon, duracion, business_size, categoria_CALZADO, categoria_CAFETERIA, categoria_PANADERIA, categoria_FARMACIA, categoria_RESTAURANTE, categoria_TIENDA "
+        #command += "FROM RUCs r INNER JOIN businesscategory b on CAST(r.actividad_economica as INT )=b.id_actividad "
+        #command += "WHERE b.business_category = 'RESTAURANTE'"
+        command = "SELECT male, age, cigsPerDay, prevalentStroke, prevalentHyp, totchol, sysbp, heartRate, glucose, TenYearCHD FROM framingham"
+
         cur.execute(command)
         restaurants = cur.fetchall()
         cur.close()
 
         array = np.array(restaurants)
         new_array = array[:,index]
+        print(f'Sum: {sum(new_array)}')
         new_array = [[e] for e in new_array]
         array = np.delete(array, index, 1)
+
+        array = (array - array.mean()) / array.std()
+        print(f'Array[3]: {array[3]}')
+        print(f'NewArray[3]: {new_array[3]}')
         array = array.tolist()
 
         global ctx_training
