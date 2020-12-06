@@ -160,7 +160,7 @@ def retrieve_data(my_address, index, url):
         column_string = json_obj['col']
         column = client_deserialize(ctx, column_string)
 
-        set_suscriptable(_ts_cpp.CKKSVector)
+        set_additional_methods(_ts_cpp.CKKSVector)
         return data, column, ctx
     except:
         return json_obj, json_obj, json_obj
@@ -208,7 +208,7 @@ def client_deserialize(ctx, result):
     else:
         return [client_deserialize(ctx, e) for e in result]
 
-def set_suscriptable(ModifiedClass):
+def set_additional_methods(ModifiedClass):
     '''def client_suscript(self, item):
         vector = np.zeros(self.size()).tolist()
         vector[item] = 1
