@@ -166,7 +166,7 @@ def retrieve_data(my_address, index, url):
         return json_obj, json_obj, json_obj
 def retrieve_result(User, result, ctx):
     random_data = random.randint(100)
-    result = array(result) + random_data
+    result = array(result, dtype=object) + random_data
     result = client_serialize(result)
 
     data = {'buyer': User.address, 'obj': result}
@@ -176,13 +176,13 @@ def retrieve_result(User, result, ctx):
     print('Result has been received!')
     print('===========================')
     try:
-        decrypted_result = array(result) - random_data
+        decrypted_result = array(result, dtype=object) - random_data
     except:
         decrypted_result = result
     return decrypted_result
 def retrieve_test_result(User, result, ctx):
     random_data = random.randint(100)
-    result = array(result) + random_data
+    result = array(result, dtype=object) + random_data
     result = client_serialize(result)
 
     data = {'buyer': User.address, 'obj': result}
@@ -192,7 +192,7 @@ def retrieve_test_result(User, result, ctx):
     print('Result has been received!')
     print('===========================')
     try:
-        decrypted_result = array(result) - random_data
+        decrypted_result = array(result, dtype=object) - random_data
     except:
         decrypted_result = result
     return decrypted_result

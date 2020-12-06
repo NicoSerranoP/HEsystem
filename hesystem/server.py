@@ -5,7 +5,6 @@ from psycopg2 import connect
 from urllib.parse import urlparse
 
 from hesystem.essentials import ndarray
-from hesystem.essentials import array
 from hesystem.essentials import retrieve_user_info
 from hesystem.essentials import set_web3
 

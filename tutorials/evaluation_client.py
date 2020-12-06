@@ -40,6 +40,9 @@ def load_data(url, target_column, ratio):
     data = data.dropna()
     data = data.drop(columns=["education", "currentSmoker", "BPMeds", "diabetes", "diaBP", "BMI"])
 
+    grouped = data.groupby(target_column)
+    data = grouped.apply(lambda x: x.sample(grouped.size().min(), random_state=73).reset_index(drop=True))
+
     # separate target column from data
     target = torch.tensor(data[target_column].values).float().unsqueeze(1)
     data = data.drop(target_column, "columns")
@@ -78,7 +81,7 @@ if __name__ == '__main__':
     #eelr.encrypt(ctx)
     enc_out = eelr(data[3])
     enc_result = cl.request_result(User, enc_out, ctx)
-    result_sigmoid = torch.sigmoid(torch.Tensor(enc_result))
+    result_sigmoid = torch.sigmoid(torch.Tensor(enc_result).astype(dtype='float32'))
     print(f"Encrypted evaluation result: {result_sigmoid}")
 
     # Checking the evaluation without encrypted data

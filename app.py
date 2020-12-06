@@ -34,7 +34,7 @@ pending_confirmation = []
 meta_link, test_link, test_result_link, data_link, result_link, num_rows, value, expiration_time, condition = sv.retrieve_contract_info()
 contract_data = sv.ContractData(value, expiration_time, meta_link, test_link, test_result_link, data_link, result_link)
 #contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
-contract_deployed = contract_data.use_contract(web3, '0x39c010B6E98684f79e96a2263a4FB59B4594c0B4')
+contract_deployed = contract_data.use_contract(web3, '0x0d55852D6dCb7F57C6D2dc49B5A4984948CF0dEc')
 print('Contract address: ' + contract_deployed.address)
 
 # Restaurant Routes
@@ -101,14 +101,11 @@ def restaurantsdata():
         cur.close()
 
         array = np.array(restaurants)
+        array = (array - array.mean()) / array.std()
         new_array = array[:,index]
         print(f'Sum: {sum(new_array)}')
         new_array = [[e] for e in new_array]
         array = np.delete(array, index, 1)
-
-        array = (array - array.mean()) / array.std()
-        print(f'Array[3]: {array[3]}')
-        print(f'NewArray[3]: {new_array[3]}')
         array = array.tolist()
 
         global ctx_training
