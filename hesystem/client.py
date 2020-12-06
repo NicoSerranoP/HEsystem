@@ -12,7 +12,7 @@ from tenseal import context_from
 from base64 import b64encode, b64decode
 
 # User information container
-class User_Data():
+class UserData():
     def __init__(self, address, private_key, endpoint_url):
         self.address = address
         self.private_key = private_key
@@ -60,13 +60,13 @@ def initialize(file_path=None):
     print('===========================')
     if file_path:
         address, private_key, endpoint_url = retrieve_user_info(file_path)
-        return User_Data(address, private_key, endpoint_url)
+        return UserData(address, private_key, endpoint_url)
     else:
         load = input('Do you want to load payment info from file? (Y/N) ')
         if load == 'Y' or load == 'y':
             user_path = input('Enter your information file path: ')
             address, private_key, endpoint_url = retrieve_user_info(user_path)
-            return User_Data(address, private_key, endpoint_url)
+            return UserData(address, private_key, endpoint_url)
         else:
             address = input('Enter your address (0x514AEa42dA89B7856C81bdAA4A20BD7D64EbA8E4): ')
             private_key = input('Enter your private_key (5D232502101181CADEF51F19294A981E22D2DCA38AB031E9BA6EE12F512263BA): ')
@@ -79,7 +79,7 @@ def initialize(file_path=None):
                 user_file.write('private_key:'+private_key+'\n')
                 user_file.write('endpoint_url:'+endpoint_url+'\n')
                 user_file.close()
-            return User_Data(address, private_key, endpoint_url)
+            return UserData(address, private_key, endpoint_url)
 def request_data(User, details_url=None, index=None):
     if not details_url:
         details_url = input('Enter the data details url: ')
