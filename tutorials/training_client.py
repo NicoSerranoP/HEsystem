@@ -5,6 +5,7 @@ import tenseal as ts
 import pandas as pd
 import random
 import torch
+import time
 
 class LR(torch.nn.Module):
     def __init__(self, n_features):
@@ -104,15 +105,17 @@ def load_data(url, target_column, ratio):
 if __name__ == '__main__':
     # Requesting encrypted data
     User = cl.initialize(file_path="info/user_info.txt")
-    data, col, ctx = cl.request_data(User, details_url="http://127.0.0.1:5000/restaurants/details", index=9)
+    data, col, ctx = cl.request_data(User, 'train', details_url="http://127.0.0.1:5000/restaurants/details", index=9)
 
     # Encrypted training
     n_features = len(data[0])
     eelr_training = EncryptedLR_training(LR(n_features))
+    start_time = time.time()
     eelr_training = enc_train(eelr_training, ctx, data, col)
+    print("Encrypted training: %s seconds" % (time.time() - start_time))
     # Requesting decrypted result (weights and bias)
     result = [eelr_training.weight, eelr_training.bias]
-    final_result = cl.request_result(User, result, ctx)
+    final_result = cl.request_result(User, 'train', result, ctx)
     # Build a new model with the decrypted result
     eelr_model = LR(n_features)
     eelr_model.lr.weight.data[0] = torch.tensor(final_result[0])
@@ -123,7 +126,9 @@ if __name__ == '__main__':
     model = LR(n_features)
     optim = torch.optim.SGD(model.parameters(), lr=1)
     criterion = torch.nn.BCELoss()
+    start_time = time.time()
     model = train(model, optim, criterion, tx_data, tx_target)
+    print("Normal training: %s seconds" % (time.time() - start_time))
 
     # To test the evaluation of the usual model and the encrypted model
     data_out = model(ts_data)
@@ -132,3 +137,8 @@ if __name__ == '__main__':
     correct_plain = (torch.abs(ts_target - data_out) < correct_threshold).float().mean()
     correct_encrypted = (torch.abs(ts_target - enc_data_out) < correct_threshold).float().mean()
     print(f'Difference between accuracies: {torch.abs(correct_plain - correct_encrypted)}')
+
+
+    # Testing functions
+    #data, public_key = cl.request_test(User, 'rotation')
+    #final_result = cl.retrieve_test_result(User, 'rotation', result, public_key)

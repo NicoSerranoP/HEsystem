@@ -119,6 +119,9 @@ pip freeze > requirements.txt
 1. If you need to compile/modify the vyper contract located in the *auxiliar* folder run the following command: ``` vyper -f bytecode .\auxiliar\new_contracts.vy > .\info\bytecode.txt ; vyper -f abi .\auxiliar\new_contracts.vy > .\info\abi.txt ```
 1. To install all dependencies and modules from a *requirements.txt* file run the following command: ``` pip install -r requirements.txt ``` and if you need to install torch then run ``` pip install -r requirements.txt -f https://download.pytorch.org/whl/torch_stable.html ```
 
+## Importing data to Postgres Database
+Remember to delete all *NA* values and to put all numerical values as float in order to successfully import the dataset.
+
 # Acknowledges
 We would like to thank the support and collaboration of PhD. Fredy Cuenca, PhD. Diego Peluffo and the [OpenMined Team](https://github.com/OpenMined/PySyft).
 

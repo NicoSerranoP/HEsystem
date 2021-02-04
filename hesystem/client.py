@@ -31,7 +31,7 @@ def retrieve_contract_web(web3, url):
     address = web3.toChecksumAddress(contract_address)
     contract = web3.eth.contract(address=address,abi=contract_abi)
     return contract, contract_value
-def buy_data(User, index, value):
+def buy_data(User, params, index, value):
     contract = User.contract
     web3 = User.web3
     key = contract.functions.buy_data().buildTransaction({
@@ -45,12 +45,12 @@ def buy_data(User, index, value):
     receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
     if receipt_tx.status:
         url = contract.functions.data_link().call()
-        return retrieve_data(User.address, index, url)
+        return retrieve_data(User.address, params, index, url)
     else:
         buy_confirmation = contract.functions.f_buyer_payed(User.address).call()
         if buy_confirmation:
             url = contract.functions.data_link().call()
-            return retrieve_data(User.address, index, url)
+            return retrieve_data(User.address, params, index, url)
         else:
             raise Exception('The buy_data function was not executed correctly')
 
@@ -80,28 +80,30 @@ def initialize(file_path=None):
                 user_file.write('endpoint_url:'+endpoint_url+'\n')
                 user_file.close()
             return UserData(address, private_key, endpoint_url)
-def request_data(User, details_url=None, index=None):
+def request_data(User, params, details_url=None, index=None):
     if not details_url:
         details_url = input('Enter the data details url: ')
     if not index:
         index = input('Enter the column index you need separated: ')
     contract, value = retrieve_contract_web(User.web3, details_url)
     User.contract = contract
-    data, col, ctx = buy_data(User, index, value)
+    data, col, ctx = buy_data(User, params, index, value)
     print('Data has been received!')
     print('===========================')
     return data, col, ctx
-def request_test(User):
-    details_url = input('Enter the data details url: ')
-    index = input('Enter the column index you need separated: ')
+def request_test(User, params, details_url=None, index=None):
+    if not details_url:
+        details_url = input('Enter the data details url: ')
+    if not index:
+        index = input('Enter the column index you need separated: ')
     contract, value = retrieve_contract_web(User.web3, details_url)
     test_url = contract.functions.test_link().call()
     User.contract = contract
-    data, col, ctx = retrieve_data(User.address, index, test_url)
+    data, col, ctx = retrieve_data(User.address, params, index, test_url)
     print('Test data has been received!')
     print('===========================')
     return data, col, ctx
-def request_result(User, result, ctx):
+def request_result(User, params, result, ctx):
     print('Real result has been requested!')
     print('===========================')
     contract = User.contract
@@ -115,7 +117,7 @@ def request_result(User, result, ctx):
     hash_tx = web3.eth.sendRawTransaction(signed_tx.rawTransaction)
     receipt_tx = web3.eth.waitForTransactionReceipt(hash_tx)
     if receipt_tx.status:
-        decrypted_result = retrieve_result(User, result, ctx)
+        decrypted_result = retrieve_result(User, params, result, ctx)
         if not isinstance(decrypted_result, (dict, str)):
             key = contract.functions.confirm_result().buildTransaction({
                 'nonce': web3.eth.getTransactionCount(User.address),
@@ -148,8 +150,8 @@ def litigation(User, details_url=None):
         print("The data purchase has been reverted")
     return receipt_tx
 # Data handling useful functions
-def retrieve_data(my_address, index, url):
-    response = post(url, json={'address': my_address, 'index': index})
+def retrieve_data(my_address, params, index, url):
+    response = post(url, json={'address': my_address, 'index': index, 'params': params})
     json_obj = response.json()
     try:
         ctx_string = json_obj['ctx']
@@ -164,12 +166,12 @@ def retrieve_data(my_address, index, url):
         return data, column, ctx
     except:
         return json_obj, json_obj, json_obj
-def retrieve_result(User, result, ctx):
+def retrieve_result(User, params, result, ctx):
     random_data = random.randint(100)
     result = array(result, dtype=object) + random_data
     result = client_serialize(result)
 
-    data = {'buyer': User.address, 'obj': result}
+    data = {'buyer': User.address, 'params': params, 'obj': result} # PUT PARAMS HERE!!!!
     result_url = User.contract.functions.result_link().call()
     response = post(result_url, json=data)
     result = response.json()
@@ -180,12 +182,12 @@ def retrieve_result(User, result, ctx):
     except:
         decrypted_result = result
     return decrypted_result
-def retrieve_test_result(User, result, ctx):
+def retrieve_test_result(User, params, result, ctx):
     random_data = random.randint(100)
     result = array(result, dtype=object) + random_data
     result = client_serialize(result)
 
-    data = {'buyer': User.address, 'obj': result}
+    data = {'buyer': User.address, 'params': params, 'obj': result}
     result_url = User.contract.functions.test_result_link().call()
     response = post(result_url, json=data)
     result = response.json()

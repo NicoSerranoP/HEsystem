@@ -6,19 +6,30 @@ import hesystem.server as sv
 import numpy as np
 
 # parameters
-#poly_mod_degree = 2**12 # value: 4096
 #poly_mod_degree = 2**13 # value: 8192
-poly_mod_degree = 2**13 # value: 8192
-#coeff_mod_bit_sizes = [40, 20, 40]
-#coeff_mod_bit_sizes = [60, 30, 60]
-coeff_mod_bit_sizes = [40, 21, 21, 21, 21, 21, 21, 40]
-ctx_training = context(SCHEME_TYPE.CKKS, poly_mod_degree, -1, coeff_mod_bit_sizes)
-#ctx_training.global_scale = 2 ** 20
-#ctx_training.global_scale = 2 ** 30
-ctx_training.global_scale = 2 ** 21
-ctx_training.generate_galois_keys()
-secret_key = ctx_training.secret_key()
-ctx_training.make_context_public()
+#coeff_mod_bit_sizes = [40, 21, 21, 21, 21, 21, 21, 40]
+#ctx_training = context(SCHEME_TYPE.CKKS, poly_mod_degree, -1, coeff_mod_bit_sizes)
+#ctx_training.global_scale = 2 ** 21
+
+#ctx_training.generate_galois_keys()
+#secret_key = ctx_training.secret_key()
+#ctx_training.make_context_public()
+
+ctx_train = context(SCHEME_TYPE.CKKS, 2**13, -1, [40, 21, 21, 21, 21, 21, 21, 40])
+ctx_train.global_scale = 2 ** 21
+ctx_train.generate_galois_keys()
+secret_key_train = ctx_train.secret_key()
+ctx_train.make_context_public()
+ctx_rotation = context(SCHEME_TYPE.CKKS, 2**13, -1, [60, 30, 60])
+ctx_rotation.global_scale = 2 ** 30
+ctx_rotation.generate_galois_keys()
+secret_key_rotation = ctx_rotation.secret_key()
+ctx_rotation.make_context_public()
+ctx_eval = context(SCHEME_TYPE.CKKS, 2**12, -1, [40, 20, 40])
+ctx_eval.global_scale = 2 ** 20
+ctx_eval.generate_galois_keys()
+secret_key_eval = ctx_eval.secret_key()
+ctx_eval.make_context_public()
 
 # Organization information
 my_address, private_key, endpoint_url = sv.retrieve_user_info()
@@ -34,7 +45,7 @@ pending_confirmation = []
 meta_link, test_link, test_result_link, data_link, result_link, num_rows, value, expiration_time, condition = sv.retrieve_contract_info()
 contract_data = sv.ContractData(value, expiration_time, meta_link, test_link, test_result_link, data_link, result_link)
 #contract_deployed = contract_data.deploy_contract(web3, my_address, private_key)
-contract_deployed = contract_data.use_contract(web3, '0x0d55852D6dCb7F57C6D2dc49B5A4984948CF0dEc')
+contract_deployed = contract_data.use_contract(web3, '0x8694A9ed96179d39DFDBD81d8eE3536e8fDaDA71')
 print('Contract address: ' + contract_deployed.address)
 
 # Restaurant Routes
@@ -46,8 +57,26 @@ def restaurantsdataresult():
     global private_key
     buyer = request.json.get('buyer')
     json_obj = request.json.get('obj')
-    global ctx_training
-    result = np.array(sv.deserialize_decrypt(ctx_training, json_obj, secret_key))
+    params = request.json.get('params')
+    global ctx_train
+    global secret_key_train
+    global ctx_eval
+    global secret_key_eval
+    global ctx_rotation
+    global secret_key_rotation
+    if params == 'train':
+        ctx_final = ctx_train
+        secret_key = secret_key_train
+    elif params == 'eval':
+        ctx_final = ctx_eval
+        secret_key = secret_key_eval
+    elif params == 'rotation':
+        ctx_final = ctx_rotation
+        secret_key = secret_key_rotation
+    else:
+        ctx_final = ctx_rotation
+        secret_key = secret_key_rotation
+    result = np.array(sv.deserialize_decrypt(ctx_final, json_obj, secret_key))
 
     global num_rows
     global condition
@@ -72,8 +101,26 @@ def restaurantsdataresult():
 def restaurantstestresult():
     print('Decrypted test result requested')
     json_obj = request.json.get('obj')
-    global ctx_training
-    result = np.array(sv.deserialize_decrypt(ctx_training, json_obj, secret_key))
+    params = request.json.get('params')
+    global ctx_train
+    global secret_key_train
+    global ctx_eval
+    global secret_key_eval
+    global ctx_rotation
+    global secret_key_rotation
+    if params == 'train':
+        ctx_final = ctx_train
+        secret_key = secret_key_train
+    elif params == 'eval':
+        ctx_final = ctx_eval
+        secret_key = secret_key_eval
+    elif params == 'mean':
+        ctx_final = ctx_rotation
+        secret_key = secret_key_rotation
+    else:
+        ctx_final = ctx_rotation
+        secret_key = secret_key_rotation
+    result = np.array(sv.deserialize_decrypt(ctx_final, json_obj, secret_key))
 
     global num_rows
     global condition
@@ -94,7 +141,7 @@ def restaurantsdata():
         #command = "SELECT lat, lon, duracion, business_size, categoria_CALZADO, categoria_CAFETERIA, categoria_PANADERIA, categoria_FARMACIA, categoria_RESTAURANTE, categoria_TIENDA "
         #command += "FROM RUCs r INNER JOIN businesscategory b on CAST(r.actividad_economica as INT )=b.id_actividad "
         #command += "WHERE b.business_category = 'RESTAURANTE'"
-        command = "SELECT male, age, cigsPerDay, prevalentStroke, prevalentHyp, totchol, sysbp, heartRate, glucose, TenYearCHD FROM framingham"
+        command = "SELECT male, age, cigsPerDay, prevalentStroke, prevalentHyp, totchol, sysbp, heartRate, glucose, TenYearCHD FROM framingham LIMIT 1000"
 
         cur.execute(command)
         restaurants = cur.fetchall()
@@ -103,15 +150,30 @@ def restaurantsdata():
         array = np.array(restaurants)
         array = (array - array.mean()) / array.std()
         new_array = array[:,index]
+        print('standarized selected array element:')
+        print('[ ' + str(new_array[0]) + ', ... ]')
         print(f'Sum: {sum(new_array)}')
         new_array = [[e] for e in new_array]
         array = np.delete(array, index, 1)
         array = array.tolist()
 
-        global ctx_training
-        ckks_serialized = sv.encrypt_serialize(ctx_training, array)
-        col_serialized = sv.encrypt_serialize(ctx_training, new_array)
-        ctx_serialized = sv.b64encode(ctx_training.serialize()).decode()
+        params = request.json.get('params')
+        global ctx_train
+        global ctx_eval
+        global ctx_rotation
+        if params == 'train':
+            ctx_final = ctx_train
+        elif params == 'eval':
+            ctx_final = ctx_eval
+        elif params == 'mean':
+
+            ctx_final = ctx_rotation
+        else:
+            ctx_final = ctx_rotation
+
+        ckks_serialized = sv.encrypt_serialize(ctx_final, array)
+        col_serialized = sv.encrypt_serialize(ctx_final, new_array)
+        ctx_serialized = sv.b64encode(ctx_final.serialize()).decode()
 
         global pending_confirmation
         pending_confirmation.append(buyer)
@@ -119,7 +181,8 @@ def restaurantsdata():
         return jsonify({
         'ckks': ckks_serialized,
         'col': col_serialized,
-        'ctx': ctx_serialized
+        'ctx': ctx_serialized,
+        'params': params,
         })
     else:
         return jsonify({'message':'There is no payment yet'})
@@ -133,10 +196,22 @@ def restaurantstest():
     array = np.delete(array, index, 1)
     array = array.tolist()
 
-    global ctx_training
-    ckks_serialized = sv.encrypt_serialize(ctx_training, array)
-    col_serialized = sv.encrypt_serialize(ctx_training, new_array)
-    ctx_serialized = sv.b64encode(ctx_training.serialize()).decode()
+    params = request.json.get('params')
+    global ctx_train
+    global ctx_eval
+    global ctx_rotation
+    if params == 'train':
+        ctx_final = ctx_train
+    elif params == 'eval':
+        ctx_final = ctx_eval
+    elif params == 'mean':
+        ctx_final = ctx_rotation
+    else:
+        ctx_final = ctx_rotation
+
+    ckks_serialized = sv.encrypt_serialize(ctx_final, array)
+    col_serialized = sv.encrypt_serialize(ctx_final, new_array)
+    ctx_serialized = sv.b64encode(ctx_final.serialize()).decode()
 
     return jsonify({
     'ckks': ckks_serialized,

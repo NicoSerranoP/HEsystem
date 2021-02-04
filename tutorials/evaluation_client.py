@@ -3,6 +3,7 @@ import hesystem as cl
 import numpy as np
 import pandas as pd
 import torch
+import time
 import random
 import tenseal as ts
 
@@ -77,16 +78,24 @@ if __name__ == '__main__':
 
     # Encrypted evaluation
     eelr = EncryptedLR_evaluation(model)
-    data, col, ctx = cl.request_data(User, details_url="http://127.0.0.1:5000/restaurants/details", index=9)
+    data, col, ctx = cl.request_data(User, 'eval', details_url="http://127.0.0.1:5000/restaurants/details", index=9)
     #eelr.encrypt(ctx)
+    start_time = time.time()
     enc_out = eelr(data[3])
-    enc_result = cl.request_result(User, enc_out, ctx)
-    result_sigmoid = torch.sigmoid(torch.Tensor(enc_result).astype(dtype='float32'))
+    print("Encrypted evaluation: %s seconds" % (time.time() - start_time))
+    enc_result = cl.request_result(User, 'eval', enc_out, ctx)
+    result_sigmoid = torch.sigmoid(torch.Tensor(enc_result.astype(dtype='float32')))
     print(f"Encrypted evaluation result: {result_sigmoid}")
 
     # Checking the evaluation without encrypted data
-    data_check, col_check, ctx_check = cl.request_data(User, details_url="http://127.0.0.1:5000/restaurants/details", index=9)
+    data_check, col_check, ctx_check = cl.request_data(User, 'eval', details_url="http://127.0.0.1:5000/restaurants/details", index=9)
     enc_out_check = data_check[3]
-    enc_result_check = cl.request_result(User, enc_out_check, ctx_check)
-    model_check = model(torch.Tensor(enc_result_check))
+    enc_result_check = cl.request_result(User, 'eval', enc_out_check, ctx_check)
+    start_time = time.time()
+    model_check = model(torch.Tensor(enc_result_check.astype(dtype='float32')))
+    print("Normal evaluation: %s seconds" % (time.time() - start_time))
     print(f"Decrypted evaluation result: {model_check}")
+
+    # Testing functions
+    #data, public_key = cl.request_test(User, 'rotation')
+    #final_result = cl.retrieve_test_result(User, 'rotation', result, public_key)
